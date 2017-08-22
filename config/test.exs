@@ -8,12 +8,3 @@ config :pastry_chef_test, PastryChefTest.Endpoint,
 
 # Print only warnings and errors during test
 config :logger, level: :warn
-
-# Configure your database
-config :pastry_chef_test, PastryChefTest.Repo,
-  adapter: Ecto.Adapters.Postgres,
-  username: "postgres",
-  password: "postgres",
-  database: "pastry_chef_test_test",
-  hostname: "localhost",
-  pool: Ecto.Adapters.SQL.Sandbox

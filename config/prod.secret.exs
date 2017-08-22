@@ -10,11 +10,3 @@ use Mix.Config
 # or recreate for your teammates (or yourself later on).
 config :pastry_chef_test, PastryChefTest.Endpoint,
   secret_key_base: "OQRVvlNjMr1MaoFpk3UwPKdcGEeGpeD3uZiQepSbwN+uJR6JNkxICEDszP1KY9WB"
-
-# Configure your database
-config :pastry_chef_test, PastryChefTest.Repo,
-  adapter: Ecto.Adapters.Postgres,
-  username: "postgres",
-  password: "postgres",
-  database: "pastry_chef_test_prod",
-  pool_size: 15

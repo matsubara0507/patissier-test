@@ -17,26 +17,11 @@ defmodule PastryChefTest.Web do
   and import those modules here.
   """
 
-  def model do
-    quote do
-      use Ecto.Schema
-
-      import Ecto
-      import Ecto.Changeset
-      import Ecto.Query
-    end
-  end
-
   def controller do
     quote do
       use Phoenix.Controller
 
-      alias PastryChefTest.Repo
-      import Ecto
-      import Ecto.Query
-
       import PastryChefTest.Router.Helpers
-      import PastryChefTest.Gettext
     end
   end
 
@@ -66,9 +51,6 @@ defmodule PastryChefTest.Web do
     quote do
       use Phoenix.Channel
 
-      alias PastryChefTest.Repo
-      import Ecto
-      import Ecto.Query
       import PastryChefTest.Gettext
     end
   end

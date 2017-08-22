@@ -5,10 +5,6 @@
 # is restricted to this project.
 use Mix.Config
 
-# General application configuration
-config :pastry_chef_test,
-  ecto_repos: [PastryChefTest.Repo]
-
 # Configures the endpoint
 config :pastry_chef_test, PastryChefTest.Endpoint,
   url: [host: "localhost"],
