@@ -1,2 +1,2 @@
 const elmDiv = document.querySelector("#elm-container")
-const elmApp = Elm.App.embed(elmDiv)
+const elmApp = Elm.Main.embed(elmDiv)
