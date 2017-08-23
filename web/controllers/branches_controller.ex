@@ -9,4 +9,10 @@ defmodule PastryChefTest.BranchesController do
 
     render conn, branches: branches
   end
+
+  def create(conn, params) do
+    message = "OK: #{params["branch"]}"
+    render conn, message: message
+  end
+
 end

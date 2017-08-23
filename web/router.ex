@@ -24,5 +24,6 @@ defmodule PastryChefTest.Router do
     pipe_through :api
 
     get "/branches", BranchesController, :index
+    post "/branches", BranchesController, :create
   end
 end
