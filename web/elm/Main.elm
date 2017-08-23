@@ -45,13 +45,12 @@ model : Model
 model = { branches = NotRequested }
 
 initModel : Model -> (Model, Cmd Msg)
-initModel model = model ! [ fetchBranch "/elixir-lang/elixir" ]
+initModel model = model ! [ fetchBranch ]
 
-fetchBranch : String -> Cmd Msg
-fetchBranch path =
+fetchBranch : Cmd Msg
+fetchBranch =
   let
-    apiUrl = "https://api.github.com/repos" ++ path ++ "/branches"
-          -- ++ "?access_token=xxx"
+    apiUrl = "/api/branches"
     request = Http.get apiUrl branchesDecorder
   in
     Http.send FetchResult request

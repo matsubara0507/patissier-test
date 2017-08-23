@@ -20,7 +20,9 @@ defmodule PastryChefTest.Router do
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", PastryChefTest do
-  #   pipe_through :api
-  # end
+  scope "/api", PastryChefTest do
+    pipe_through :api
+
+    get "/branches", BranchesController, :index
+  end
 end

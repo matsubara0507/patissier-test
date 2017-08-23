@@ -16700,8 +16700,8 @@ var _user$project$Main$undefined = function (_p0) {
 	return _elm_lang$core$Native_Utils.crash(
 		'Main',
 		{
-			start: {line: 113, column: 15},
-			end: {line: 113, column: 20}
+			start: {line: 112, column: 15},
+			end: {line: 112, column: 20}
 		})('Undefined!');
 };
 var _user$project$Main$warningMessage = F3(
@@ -16862,21 +16862,18 @@ var _user$project$Main$model = {branches: _user$project$Main$NotRequested};
 var _user$project$Main$FetchResult = function (a) {
 	return {ctor: 'FetchResult', _0: a};
 };
-var _user$project$Main$fetchBranch = function (path) {
-	var apiUrl = A2(
-		_elm_lang$core$Basics_ops['++'],
-		'https://api.github.com/repos',
-		A2(_elm_lang$core$Basics_ops['++'], path, '/branches'));
+var _user$project$Main$fetchBranch = function () {
+	var apiUrl = '/api/branches';
 	var request = A2(_elm_lang$http$Http$get, apiUrl, _user$project$Main$branchesDecorder);
 	return A2(_elm_lang$http$Http$send, _user$project$Main$FetchResult, request);
-};
+}();
 var _user$project$Main$initModel = function (model) {
 	return A2(
 		_elm_lang$core$Platform_Cmd_ops['!'],
 		model,
 		{
 			ctor: '::',
-			_0: _user$project$Main$fetchBranch('/elixir-lang/elixir'),
+			_0: _user$project$Main$fetchBranch,
 			_1: {ctor: '[]'}
 		});
 };
