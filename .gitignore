@@ -6,6 +6,7 @@ erl_crash.dump
 *.ez
 *.beam
 /web/static/vendor
+/priv/static
 
 # Elm
 # elm-package generated files
