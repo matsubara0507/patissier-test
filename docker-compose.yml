@@ -1,0 +1,10 @@
+version: '2'
+services:
+  pastry-chef:
+    build: .
+    ports:
+      - "80:4000"
+    environment:
+      GITHUB_AUTH_TOKEN: xxx
+      AWS_ACCESS_KEY: yyy
+      AWS_SECRET_KEY: zzz
