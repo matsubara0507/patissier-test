@@ -19,7 +19,10 @@ config :logger, :console,
   metadata: [:request_id]
 
 config :pastry_chef_test, PastryChefTest.BranchesController,
-  github_auth_token: System.get_env("GITHUB_AUTH_TOKEN")
+  github_auth_token: System.get_env("GITHUB_AUTH_TOKEN"),
+  aws_access_key: System.get_env("AWS_ACCESS_KEY"),
+  aws_secret_key: System.get_env("AWS_SECRET_KEY"),
+  image: System.get_env("ECR_IMAGE")
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
