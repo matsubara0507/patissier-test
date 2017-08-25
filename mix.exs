@@ -20,7 +20,7 @@ defmodule PastryChefTest.Mixfile do
   def application do
     [
       mod: {PastryChefTest, []},
-      extra_applications: [:logger, :tentacat, :aws]
+      extra_applications: [:logger, :tentacat, :ex_aws, :hackney, :poison]
     ]
   end
 
@@ -40,7 +40,9 @@ defmodule PastryChefTest.Mixfile do
       {:gettext, "~> 0.11"},
       {:cowboy, "~> 1.0"},
       {:tentacat, "~> 0.5"},
-      {:aws, "~> 0.5.0"}
+      {:ex_aws, "~> 1.0"},
+      {:poison, "~> 2.0"},
+      {:hackney, "~> 1.6"}
     ]
   end
 
