@@ -25,7 +25,7 @@ defmodule PastryChefTest.BranchesController do
       containerDefinitions: [
         %{
           name: "hello_world",
-          image: env["image"],
+          image: env[:image],
           portMappings: [ %{ hostPort: 80, containerPort: 4000, protocol: "tcp" } ],
           environment: [
             %{ name: "ELIXIR_BRANCH", value: params["branch"] } ],
