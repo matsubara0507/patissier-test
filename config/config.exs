@@ -21,7 +21,8 @@ config :logger, :console,
 config :pastry_chef_test, PastryChefTest.BranchesController,
   github_auth_token: System.get_env("GITHUB_AUTH_TOKEN"),
   image_id: System.get_env("IMAGE_ID"),
-  key_name: System.get_env("KEY_NAME")
+  key_name: System.get_env("KEY_NAME"),
+  key_path: System.get_env("KEY_PATH")
 
 config :ex_aws,
   access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, :instance_role],

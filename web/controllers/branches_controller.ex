@@ -14,17 +14,30 @@ defmodule PastryChefTest.BranchesController do
 
   def create(conn, params) do
     env = Application.get_env(:pastry_chef_test, PastryChefTest.BranchesController)
+    branch = params["branch"]
     result = OK.with do
-      response <- run_ec2_instance(env[:image_id], env[:key_name])
-      private_ip_address = parse_private_ip_address(response)
-      IO.inspect private_ip_address
-      fetch_public_ip_address(private_ip_address)
+      response1 <- run_ec2_instance(env[:image_id], env[:key_name])
+      instance_id = parse_instance_id(response1)
+      IO.inspect instance_id
+      _ <- wait_running(instance_id)
+      IO.inspect "instance is running!"
+      _ <- wait_status_ok(instance_id)
+      IO.inspect "instance status is OK!"
+      response2 <- fetch_ec2_instance_info(instance_id)
+      public_ip_address = parse_public_ip_address(response2)
+      IO.inspect public_ip_address
+      # IO.inspect System.cmd("ping", ["-c", "1", public_ip_address])
+      conn <- connect_ssh_repeat(public_ip_address, env[:key_path])
+      IO.inspect "ssh success!"
+      dir = "/home/ec2-user/"
+      SSHEx.cmd! conn, "echo #{branch} > #{dir}/index.html"
+      OK.success "run `ssh -i #{env[:key_path]}/id_rsa ec2-user@#{public_ip_address} cat index.html`"
     end
     case result do
       {:ok, term} ->
-        render conn, message: "success! branch: #{params["branch"]}\n #{inspect(term)}"
+        render conn, message: "success! branch: #{branch}\n #{inspect(term)}"
       {:error, term} ->
-        render conn, message: "#{inspect(term)}"
+        render conn, message: "error: #{inspect(term)}"
     end
   end
 
@@ -33,14 +46,19 @@ defmodule PastryChefTest.BranchesController do
     |> ExAws.request
   end
 
-  defp parse_private_ip_address(response) do
-    SweetXml.xpath(response[:body], ~x"//privateIpAddress/text()")
-    |> to_string
+  defp fetch_ec2_instance_info(instance_id) do
+    ExAws.EC2.describe_instances([instance_ids: [instance_id]])
+    |> ExAws.request
   end
 
-  defp fetch_ec2_instance_info(private_ip_address) do
-    ExAws.EC2.describe_instances([filters: ["private-ip-address": [private_ip_address]]])
+  defp fetch_ec2_instance_status(instance_id) do
+    ExAws.EC2.describe_instance_status([instance_ids: [instance_id]])
     |> ExAws.request
+  end
+
+  defp parse_instance_id(response) do
+    SweetXml.xpath(response[:body], ~x"//instanceId/text()")
+    |> to_string
   end
 
   defp parse_public_ip_address(response) do
@@ -48,16 +66,47 @@ defmodule PastryChefTest.BranchesController do
     |> to_string
   end
 
-  defp fetch_public_ip_address(private_ip_address) do
+  defp parse_instance_state_name(response) do
+    SweetXml.xpath(response[:body], ~x"//instanceState/name/text()")
+    |> to_string
+  end
+
+  defp parse_instance_status(response) do
+    SweetXml.xpath(response[:body], ~x"//instanceStatus/status/text()")
+    |> to_string
+  end
+
+  defp wait_running(instance_id) do
+    :timer.sleep(2000)
+    IO.inspect "wait..."
     OK.with do
-      response <- fetch_ec2_instance_info(private_ip_address)
-      case parse_public_ip_address(response) do
-        "" ->
-          :timer.sleep(2000)
-          IO.inspect "fetch..."
-          fetch_public_ip_address(private_ip_address)
-        public_ip_address -> OK.success(public_ip_address)
+      response <- fetch_ec2_instance_info(instance_id)
+      case parse_instance_state_name(response) do
+        "running" -> OK.success(nil)
+        _ -> wait_running(instance_id)
       end
+    end
+  end
+
+  defp wait_status_ok(instance_id) do
+    :timer.sleep(2000)
+    IO.inspect "wait..."
+    OK.with do
+      response <- fetch_ec2_instance_status(instance_id)
+      case parse_instance_status(response) do
+        "ok" -> OK.success(nil)
+        _ -> wait_running(instance_id)
+      end
+    end
+  end
+
+  defp connect_ssh_repeat(public_ip_address, key_path) do
+    OK.with do
+      IO.inspect "connecting..."
+      :timer.sleep(2000)
+      SSHEx.connect ip: public_ip_address, user: "ec2-user", user_dir: key_path
+    else
+      :econnrefused -> connect_ssh_repeat(public_ip_address, key_path)
     end
   end
 end
