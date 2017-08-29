@@ -14,7 +14,8 @@ defmodule PastryChefTest.BranchesController do
 
   def create(conn, params) do
     env = Application.get_env(:pastry_chef_test, PastryChefTest.BranchesController)
-    branch = params["branch"]
+    branch1 = params["branch1"]
+    branch2 = params["branch2"]
     result = OK.with do
       response1 <- run_ec2_instance(env[:image_id], env[:key_name])
       instance_id = parse_instance_id(response1)
@@ -30,12 +31,12 @@ defmodule PastryChefTest.BranchesController do
       conn <- connect_ssh_repeat(public_ip_address, env[:key_path])
       IO.inspect "ssh success!"
       dir = "/home/ec2-user/"
-      SSHEx.cmd! conn, "echo #{branch} > #{dir}/index.html"
+      SSHEx.cmd! conn, "echo '#{branch1} and #{branch2}' > #{dir}/index.html"
       OK.success "run `ssh -i #{env[:key_path]}/id_rsa ec2-user@#{public_ip_address} cat index.html`"
     end
     case result do
       {:ok, term} ->
-        render conn, message: "success! branch: #{branch}\n #{inspect(term)}"
+        render conn, message: "success! branch1: #{branch1}, branch2: #{branch2}\n#{inspect(term)}"
       {:error, term} ->
         render conn, message: "error: #{inspect(term)}"
     end

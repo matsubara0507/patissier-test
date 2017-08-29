@@ -26,22 +26,28 @@ type alias RepoModel =
   }
 
 type alias Model =
-  { repository : RepoModel
+  { repository1 : RepoModel
+  , repository2 : RepoModel
   , result : RemoteData String String
   }
 
 type Msg
-  = BranchSelector BS.Msg
+  = BranchSelector1 BS.Msg
+  | BranchSelector2 BS.Msg
   | FetchResultCreateEnv (Result Http.Error String)
-  | RequestToCreateEnv String
+  | RequestToCreateEnv String String
 
 init : (Model, Cmd Msg)
 init = initModel model
 
 model : Model
 model =
-  { repository =
-    { name = "html-dump"
+  { repository1 =
+    { name = "html-dump1"
+    , branchModel = BS.model
+    }
+  , repository2 =
+    { name = "html-dump2"
     , branchModel = BS.model
     }
   , result = NotRequested
@@ -50,14 +56,20 @@ model =
 initModel : Model -> (Model, Cmd Msg)
 initModel model =
   ( model
-  , Cmd.map BranchSelector $ BS.fetchBranch ""
+  , Cmd.batch
+      [ Cmd.map BranchSelector1 $ BS.fetchBranch ""
+      , Cmd.map BranchSelector2 $ BS.fetchBranch ""
+      ]
   )
 
-fetchResult : String -> Cmd Msg
-fetchResult branchName =
+fetchResult : String -> String -> Cmd Msg
+fetchResult branchName1 branchName2 =
   let
     apiUrl = "/api/branches"
-    body = Http.multipartBody [ Http.stringPart "branch" branchName ]
+    body = Http.multipartBody
+      [ Http.stringPart "branch1" branchName1
+      , Http.stringPart "branch2" branchName2
+      ]
     request = Http.post apiUrl body string
   in
     Http.send FetchResultCreateEnv request
@@ -71,9 +83,14 @@ view model =
 
 viewContent : Model -> List (Html Msg)
 viewContent model =
-  [ Html.map BranchSelector
-    $ BS.view model.repository.name model.repository.branchModel
-  , button [ onClick (RequestToCreateEnv model.repository.branchModel.selectBranchName) ]
+  [ Html.map BranchSelector1
+    $ BS.view model.repository1.name model.repository1.branchModel
+  , Html.map BranchSelector2
+    $ BS.view model.repository2.name model.repository2.branchModel
+  , button [ onClick (RequestToCreateEnv
+                        model.repository1.branchModel.selectBranchName
+                        model.repository2.branchModel.selectBranchName)
+            ]
            [ text "request!" ]
   ]
 
@@ -100,19 +117,20 @@ viewResult model =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    BranchSelector branchMsg ->
-      flip updateRepo model *** Cmd.map BranchSelector
-      $ BS.update branchMsg model.repository.branchModel
+    BranchSelector1 branchMsg ->
+      (\m -> { model | repository1 = updateRepo m model.repository1 })
+        *** Cmd.map BranchSelector1
+      $ BS.update branchMsg model.repository1.branchModel
+    BranchSelector2 branchMsg ->
+      (\m -> { model | repository2 = updateRepo m model.repository2 })
+        *** Cmd.map BranchSelector2
+      $ BS.update branchMsg model.repository2.branchModel
     FetchResultCreateEnv (Ok response) ->
       ({ model | result = Success response }, Cmd.none)
     FetchResultCreateEnv (Err error) ->
       ({ model | result = Failure "Something went wrong..." }, Cmd.none)
-    RequestToCreateEnv branch ->
-      (model, Cmd.batch [ fetchResult branch ])
+    RequestToCreateEnv branch1 branch2 ->
+      (model, Cmd.batch [ fetchResult branch1 branch2 ])
 
-updateRepo : BS.Model -> Model -> Model
-updateRepo branchModel model =
-  let
-    repository_ = model.repository
-  in
-    { model | repository = { repository_ | branchModel = branchModel } }
+updateRepo : BS.Model -> RepoModel -> RepoModel
+updateRepo branchModel repo = { repo | branchModel = branchModel }
