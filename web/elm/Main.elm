@@ -1,12 +1,16 @@
 module Main exposing (..)
 
-import Debug exposing (crash)
+import BranchSelector as BS
+import Types.RemoteData exposing (RemoteData(..))
+import Utils exposing (warningMessage)
+
 import Html exposing (..)
 import Html.Attributes exposing (class, list, id, value)
 import Html.Events exposing (..)
 import Http
-import Json.Decode as JD exposing (succeed, field, string)
-import Json.Decode.Extra exposing ((|:))
+import Json.Decode as JD exposing (string)
+
+import Data.Composition exposing (..)
 
 main : Program Never Model Msg
 main = program
@@ -16,52 +20,38 @@ main = program
      , subscriptions = always <| Sub.none
      }
 
+type alias RepoModel =
+  { name : String
+  , branchModel : BS.Model
+  }
+
 type alias Model =
-  { branches : RemoteData String Branches
-  , selectBranchName : String
+  { repository : RepoModel
   , result : RemoteData String String
   }
 
-type alias Branches = List Branch
-
-type alias Branch = { name : String }
-
-type RemoteData e a
-  = NotRequested
-  | Requesting
-  | Failure e
-  | Success a
-
 type Msg
-  = FetchBranches (Result Http.Error Branches)
+  = BranchSelector BS.Msg
   | FetchResultCreateEnv (Result Http.Error String)
-  | ChangeSelectBranchName String
   | RequestToCreateEnv String
-
-branchesDecorder : JD.Decoder Branches
-branchesDecorder = succeed Branch
-                 |: (field "name" string)
-                 |> JD.list
 
 init : (Model, Cmd Msg)
 init = initModel model
 
 model : Model
-model = { branches = NotRequested
-        , selectBranchName = ""
-        , result = NotRequested
-        }
+model =
+  { repository =
+    { name = "html-dump"
+    , branchModel = BS.model
+    }
+  , result = NotRequested
+  }
 
 initModel : Model -> (Model, Cmd Msg)
-initModel model = model ! [ fetchBranch ]
-
-fetchBranch : Cmd Msg
-fetchBranch =
-  let
-    apiUrl = "/api/branches"
-    request = Http.get apiUrl branchesDecorder
-  in
-    Http.send FetchBranches request
+initModel model =
+  ( model
+  , Cmd.map BranchSelector $ BS.fetchBranch ""
+  )
 
 fetchResult : String -> Cmd Msg
 fetchResult branchName =
@@ -78,6 +68,13 @@ view model =
     [ div [ id "repo-branches" ] (viewContent model)
     , div [ id "result" ] (viewResult model)
     ]
+
+viewContent : Model -> List (Html Msg)
+viewContent model =
+  [ Html.map BranchSelector $ BS.view model.repository.branchModel
+  , button [ onClick (RequestToCreateEnv model.repository.branchModel.selectBranchName) ]
+           [ text "request!" ]
+  ]
 
 viewResult : Model -> List (Html Msg)
 viewResult model =
@@ -99,74 +96,22 @@ viewResult model =
     Success page ->
       [ div [] [ text page ] ]
 
-viewContent : Model -> List (Html Msg)
-viewContent model =
-  case model.branches of
-    NotRequested ->
-      [ text "" ]
-    Requesting ->
-      [ warningMessage
-          "fa fa-spin fa-cog fa-2x fa-fw"
-          "getting branches"
-          (text "")
-      ]
-    Failure error ->
-      [ warningMessage
-          "fa fa-meh-o fa-stack-2x"
-          error
-          (text "")
-      ]
-    Success page ->
-      [ div []
-            [ selectBranch page
-            , button [ onClick (RequestToCreateEnv model.selectBranchName) ]
-                     [ text "request!" ]
-            ]
-      ]
-
-selectBranch : Branches -> Html Msg
-selectBranch branches =
-  div
-      [ onInput ChangeSelectBranchName ]
-      [ span [] [ text "branch: " ]
-      , select [ class "branch-list" ]
-          <| (::) (option [ value "" ] [ text "--unselect--" ])
-          <| List.map viewBranch branches
-      ]
-
-viewBranch : Branch -> Html msg
-viewBranch branch =
-  option [ value branch.name ] [ text branch.name ]
-
-warningMessage : String -> String -> Html Msg -> Html Msg
-warningMessage iconClasses message content =
-    div
-        [ class "warning" ]
-        [ span
-            [ class "fa-stack" ]
-            [ i [ class iconClasses ] [] ]
-        , h4
-            []
-            [ text message ]
-        , content
-        ]
-
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    FetchBranches (Ok response) ->
-      { model | branches = Success response } ! []
-    FetchBranches (Err error) ->
-      { model | branches = Failure "Something went wrong..." } ! []
+    BranchSelector branchMsg ->
+      flip updateRepo model *** Cmd.map BranchSelector
+      $ BS.update branchMsg model.repository.branchModel
     FetchResultCreateEnv (Ok response) ->
-      { model | result = Success response } ! []
+      ({ model | result = Success response }, Cmd.none)
     FetchResultCreateEnv (Err error) ->
-      { model | result = Failure "Something went wrong..." } ! []
-    ChangeSelectBranchName branchName ->
-      { model | selectBranchName = branchName } ! []
+      ({ model | result = Failure "Something went wrong..." }, Cmd.none)
     RequestToCreateEnv branch ->
-      model ! [ fetchResult branch ]
+      (model, Cmd.batch [ fetchResult branch ])
 
-
-undefined : () -> a
-undefined _ = crash "Undefined!"
+updateRepo : BS.Model -> Model -> Model
+updateRepo branchModel model =
+  let
+    repository_ = model.repository
+  in
+    { model | repository = { repository_ | branchModel = branchModel } }
