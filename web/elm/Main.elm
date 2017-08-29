@@ -71,7 +71,8 @@ view model =
 
 viewContent : Model -> List (Html Msg)
 viewContent model =
-  [ Html.map BranchSelector $ BS.view model.repository.branchModel
+  [ Html.map BranchSelector
+    $ BS.view model.repository.name model.repository.branchModel
   , button [ onClick (RequestToCreateEnv model.repository.branchModel.selectBranchName) ]
            [ text "request!" ]
   ]

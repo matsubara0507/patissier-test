@@ -10,6 +10,8 @@ import Http
 import Json.Decode as JD exposing (succeed, field, string)
 import Json.Decode.Extra exposing ((|:))
 
+import Data.Composition exposing (..)
+
 type alias Branches = List Branch
 type alias Branch = { name : String }
 
@@ -41,21 +43,21 @@ fetchBranch repo =
   in
     Http.send FetchBranches request
 
-view : Model -> Html Msg
-view model =
+view : String -> Model -> Html Msg
+view repoName model =
   case model.branches of
     NotRequested -> text ""
     Requesting ->
       warningMessage "fa fa-spin fa-cog fa-2x fa-fw" "getting branches" (text "")
     Failure error ->
       warningMessage "fa fa-meh-o fa-stack-2x" error (text "")
-    Success page -> selectBranch page
+    Success page -> selectBranch repoName page
 
-selectBranch : Branches -> Html Msg
-selectBranch branches =
+selectBranch : String -> Branches -> Html Msg
+selectBranch repoName branches =
   div
       [ onInput ChangeSelectBranchName ]
-      [ span [] [ text "branch: " ]
+      [ span [] [ text $ repoName ++ ": " ]
       , select [ class "branch-list" ]
           <| (::) (option [ value "" ] [ text "--unselect--" ])
           <| List.map viewBranch branches
