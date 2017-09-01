@@ -14,8 +14,8 @@ defmodule PastryChefTest.BranchesController do
 
   def create(conn, params) do
     env = Application.get_env(:pastry_chef_test, PastryChefTest.BranchesController)
-    branch1 = params["branch1"]
-    branch2 = params["branch2"]
+    branch1 = params["html-dump1"]
+    branch2 = params["html-dump2"]
     result = OK.with do
       response1 <- run_ec2_instance(env[:image_id], env[:key_name])
       instance_id = parse_instance_id(response1)

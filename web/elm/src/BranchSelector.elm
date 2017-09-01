@@ -58,7 +58,7 @@ selectBranch repoName branches =
   div
       [ onInput ChangeSelectBranchName ]
       [ span [] [ text $ repoName ++ ": " ]
-      , select [ class "branch-list" ]
+      , select [ class "branch-list", id repoName ]
           <| (::) (option [ value "" ] [ text "--unselect--" ])
           <| List.map viewBranch branches
       ]
