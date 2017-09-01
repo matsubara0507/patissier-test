@@ -71,8 +71,8 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     FetchBranches (Ok response) ->
-      ({ model | branches = Success response }, Cmd.batch [])
+      ({ model | branches = Success response }, Cmd.none)
     FetchBranches (Err error) ->
-      ({ model | branches = Failure "Something went wrong..." }, Cmd.batch [])
+      ({ model | branches = Failure "Something went wrong..." }, Cmd.none)
     ChangeSelectBranchName branchName ->
-      ({ model | selectBranchName = branchName }, Cmd.batch [])
+      ({ model | selectBranchName = branchName }, Cmd.none)
