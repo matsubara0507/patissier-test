@@ -32,6 +32,7 @@ type alias Model =
 type Msg
   = BranchSelector RepoName BS.Msg
   | FetchResultCreateEnv (Result Http.Error String)
+  | FetchInstances (Result Http.Error String)
   | RequestToCreateEnv (List (RepoName, String))
 
 init : (Model, Cmd Msg)
@@ -51,8 +52,17 @@ initModel model =
   ( model
   , model.repositories
     |> List.map (\repo -> Cmd.map (BranchSelector repo.name) $ BS.fetchBranch "")
+    |> (::) fetchInstances
     |> Cmd.batch
   )
+
+fetchInstances : Cmd Msg
+fetchInstances =
+  let
+    apiUrl = "/api/instances"
+    request = Http.get apiUrl string
+  in
+    Http.send FetchInstances request
 
 fetchResult : List (RepoName, String) -> Cmd Msg
 fetchResult branchNames =
@@ -118,6 +128,10 @@ update msg model =
     FetchResultCreateEnv (Ok response) ->
       ({ model | result = Success response }, Cmd.none)
     FetchResultCreateEnv (Err error) ->
+      ({ model | result = Failure "Something went wrong..." }, Cmd.none)
+    FetchInstances (Ok response) ->
+      ({ model | result = Success response }, Cmd.none)
+    FetchInstances (Err error) ->
       ({ model | result = Failure "Something went wrong..." }, Cmd.none)
     RequestToCreateEnv branches ->
       (model, fetchResult branches)

@@ -42,6 +42,19 @@ defmodule PastryChefTest.BranchesController do
     end
   end
 
+  def instances(conn, _param) do
+    result = OK.with do
+      ExAws.EC2.describe_instances([filters: [{"tag:project", "pastry-chef"}]])
+      |> ExAws.request
+    end
+    case result do
+      {:ok, term} ->
+        render conn, message: "success! #{inspect(term)}"
+      {:error, term} ->
+        render conn, message: "error: #{inspect(term)}"
+    end
+  end
+
   defp run_ec2_instance(image_id, key_name, branch1, branch2) do
     ExAws.EC2.run_instances(image_id, 1, 1,
       [ key_name: key_name,

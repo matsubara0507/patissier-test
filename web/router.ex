@@ -25,5 +25,6 @@ defmodule PastryChefTest.Router do
 
     get "/branches", BranchesController, :index
     post "/branches", BranchesController, :create
+    get "/instances", BranchesController, :instances
   end
 end
