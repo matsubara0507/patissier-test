@@ -44,12 +44,14 @@ defmodule PastryChefTest.BranchesController do
 
   def instances(conn, _param) do
     result = OK.with do
-      ExAws.EC2.describe_instances([filters: [{"tag:project", "pastry-chef"}]])
-      |> ExAws.request
+      response <- fetch_ec2_instances_info()
+      instances_info = parse_instances_info(response)
+      IO.inspect instances_info
+      OK.success instances_info
     end
     case result do
       {:ok, term} ->
-        render conn, message: "success! #{inspect(term)}"
+        render conn, instances: term
       {:error, term} ->
         render conn, message: "error: #{inspect(term)}"
     end
@@ -71,6 +73,11 @@ defmodule PastryChefTest.BranchesController do
 
   defp fetch_ec2_instance_info(instance_id) do
     ExAws.EC2.describe_instances([instance_ids: [instance_id]])
+    |> ExAws.request
+  end
+
+  defp fetch_ec2_instances_info() do
+    ExAws.EC2.describe_instances([filters: [{"tag:project", "pastry-chef"}]])
     |> ExAws.request
   end
 
@@ -97,6 +104,19 @@ defmodule PastryChefTest.BranchesController do
   defp parse_instance_status(response) do
     SweetXml.xpath(response[:body], ~x"//instanceStatus/status/text()")
     |> to_string
+  end
+
+  defp parse_instances_info(response) do
+    SweetXml.xpath(response[:body],
+      ~x"//instancesSet/item"l,
+      instance_id: ~x"//instanceId/text()"s,
+      public_ip: ~x"//publicIp/text()"s,
+      tags: [
+        ~x"//tagSet/item"l,
+        key: ~x"//key/text()"s,
+        value: ~x"//value/text()"s
+      ]
+    )
   end
 
   defp wait_running(instance_id) do

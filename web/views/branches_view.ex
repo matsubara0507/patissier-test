@@ -5,5 +5,6 @@ defmodule PastryChefTest.BranchesView do
 
   def render("create.json", %{message: message}), do: message
 
+  def render("instances.json", %{instances: instances}), do: instances
   def render("instances.json", %{message: message}), do: message
 end

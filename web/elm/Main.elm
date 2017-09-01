@@ -1,146 +1,83 @@
 module Main exposing (..)
 
-import BranchSelector as BS
-import Types.RemoteData exposing (RemoteData(..))
-import Utils exposing (warningMessage)
+import Instance.List as Instances
+import Instance.New as New
+import Routes as Routes exposing (Sitemap(..))
 
 import Html exposing (..)
-import Html.Attributes exposing (class, list, id, value)
-import Html.Events exposing (..)
-import Http
-import Json.Decode as JD exposing (string)
-import List.Extra as List
+import Navigation exposing (Location)
 
 import Data.Composition exposing (..)
 
 main : Program Never Model Msg
-main = program
-     { init = init
-     , view = view
-     , update = update
-     , subscriptions = always <| Sub.none
-     }
-
-type alias RepoName = String
-type alias RepoModel = { name : RepoName, branchModel : BS.Model }
+main =
+  Navigation.program parseRoute
+    { init = init
+    , update = update
+    , view = view
+    , subscriptions = subscriptions
+    }
 
 type alias Model =
-  { repositories : List RepoModel
-  , result : RemoteData String String
+  { sitemap : Sitemap
+  , instances : Instances.Model
+  , newInstance : New.Model
   }
 
 type Msg
-  = BranchSelector RepoName BS.Msg
-  | FetchResultCreateEnv (Result Http.Error String)
-  | FetchInstances (Result Http.Error String)
-  | RequestToCreateEnv (List (RepoName, String))
+    = RouteChanged Sitemap
+    | GetInstances Instances.Msg
+    | NewInstance New.Msg
 
-init : (Model, Cmd Msg)
-init = initModel model
-
-model : Model
-model =
-  { repositories =
-      [ { name = "html-dump1", branchModel = BS.model }
-      , { name = "html-dump2", branchModel = BS.model }
-      ]
-  , result = NotRequested
-  }
-
-initModel : Model -> (Model, Cmd Msg)
-initModel model =
-  ( model
-  , model.repositories
-    |> List.map (\repo -> Cmd.map (BranchSelector repo.name) $ BS.fetchBranch "")
-    |> (::) fetchInstances
-    |> Cmd.batch
-  )
-
-fetchInstances : Cmd Msg
-fetchInstances =
+init : Location -> (Model, Cmd Msg)
+init location =
   let
-    apiUrl = "/api/instances"
-    request = Http.get apiUrl string
+    route = Routes.parsePath location
   in
-    Http.send FetchInstances request
+    handleRoute route
+      { sitemap = route
+      , instances = Instances.model
+      , newInstance = New.model
+      }
 
-fetchResult : List (RepoName, String) -> Cmd Msg
-fetchResult branchNames =
-  let
-    apiUrl = "/api/branches"
-    body =
-      Http.multipartBody
-      $ List.map (uncurry Http.stringPart) branchNames
-    request = Http.post apiUrl body string
-  in
-    Http.send FetchResultCreateEnv request
-
-view : Model -> Html Msg
-view model =
-  div []
-    [ div [ id "repo-branches" ] (viewContent model)
-    , div [ id "result" ] (viewResult model)
-    ]
-
-viewContent : Model -> List (Html Msg)
-viewContent model =
-  let
-    viewRepo repo =
-      Html.map (BranchSelector repo.name) $ BS.view repo.name repo.branchModel
-    repoToTuple repo = (repo.name, repo.branchModel.selectBranchName)
-  in
-    [ div [] $ List.map viewRepo model.repositories
-    , button
-        [ onClick . RequestToCreateEnv $ List.map repoToTuple model.repositories ]
-        [ text "request!" ]
-    ]
-
-viewResult : Model -> List (Html Msg)
-viewResult model =
-  case model.result of
-    NotRequested ->
-      [ text "" ]
-    Requesting ->
-      [ warningMessage
-          "fa fa-spin fa-cog fa-2x fa-fw"
-          "getting branches"
-          (text "aaa")
-      ]
-    Failure error ->
-      [ warningMessage
-          "fa fa-meh-o fa-stack-2x"
-          error
-          (text "bbb")
-      ]
-    Success page ->
-      [ div [] [ text page ] ]
+parseRoute : Location -> Msg
+parseRoute =
+    Routes.parsePath >> RouteChanged
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    BranchSelector repoName branchMsg ->
-      case List.find (\repo -> repo.name == repoName) model.repositories of
-        Just repo ->
-          flip (updateRepo repoName) model *** Cmd.map (BranchSelector repoName)
-          $ BS.update branchMsg repo.branchModel
-        Nothing ->
-          ({ model | result = Failure "repo is not found..." }, Cmd.none)
-    FetchResultCreateEnv (Ok response) ->
-      ({ model | result = Success response }, Cmd.none)
-    FetchResultCreateEnv (Err error) ->
-      ({ model | result = Failure "Something went wrong..." }, Cmd.none)
-    FetchInstances (Ok response) ->
-      ({ model | result = Success response }, Cmd.none)
-    FetchInstances (Err error) ->
-      ({ model | result = Failure "Something went wrong..." }, Cmd.none)
-    RequestToCreateEnv branches ->
-      (model, fetchResult branches)
+    RouteChanged route -> handleRoute route model
+    GetInstances instancesMsg ->
+      (\m -> { model | instances = m}) *** Cmd.map GetInstances
+      $ Instances.update instancesMsg model.instances
+    NewInstance newInstanceMsg ->
+      (\m -> { model | newInstance = m}) *** Cmd.map NewInstance
+      $ New.update newInstanceMsg model.newInstance
 
-updateRepo : RepoName -> BS.Model -> Model -> Model
-updateRepo repoName branchModel model =
+handleRoute : Sitemap -> Model -> (Model, Cmd Msg)
+handleRoute route m =
   let
-    repo = { name = repoName, branchModel = branchModel }
-    repositories_ =
-      List.replaceIf (\r -> r.name == repoName) repo model.repositories
+    model = { m | sitemap = route }
   in
-    { model | repositories = repositories_ }
+    case route of
+      HomeR -> (model, Cmd.map GetInstances Instances.fetchInstances)
+      NewR ->
+        (\m -> { model | newInstance = m }) *** Cmd.map NewInstance
+        $ New.initModel model.newInstance
+      _ -> (model, Cmd.none)
+
+subscriptions : Model -> Sub msg
+subscriptions model = Sub.none
+
+
+view : Model -> Html Msg
+view model =
+  case model.sitemap of
+    HomeR -> Html.map GetInstances $ Instances.view model.instances
+    NewR -> Html.map NewInstance $ New.view model.newInstance
+    NotFoundR -> notFound
+
+notFound : Html msg
+notFound =
+    h1 [] [ text "Page not found" ]
