@@ -87,23 +87,19 @@ defmodule PastryChefTest.BranchesController do
   end
 
   defp parse_instance_id(response) do
-    SweetXml.xpath(response[:body], ~x"//instanceId/text()")
-    |> to_string
+    SweetXml.xpath(response[:body], ~x"//instanceId/text()"s)
   end
 
   defp parse_public_ip_address(response) do
-    SweetXml.xpath(response[:body], ~x"//publicIp/text()")
-    |> to_string
+    SweetXml.xpath(response[:body], ~x"//publicIp/text()"s)
   end
 
   defp parse_instance_state_name(response) do
-    SweetXml.xpath(response[:body], ~x"//instanceState/name/text()")
-    |> to_string
+    SweetXml.xpath(response[:body], ~x"//instanceState/name/text()"s)
   end
 
   defp parse_instance_status(response) do
-    SweetXml.xpath(response[:body], ~x"//instanceStatus/status/text()")
-    |> to_string
+    SweetXml.xpath(response[:body], ~x"//instanceStatus/status/text()"s)
   end
 
   defp parse_instances_info(response) do
