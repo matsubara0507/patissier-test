@@ -17,7 +17,7 @@ defmodule PastryChefTest.BranchesController do
     branch1 = params["html-dump1"]
     branch2 = params["html-dump2"]
     result = OK.with do
-      response1 <- run_ec2_instance(env[:image_id], env[:key_name])
+      response1 <- run_ec2_instance(env[:image_id], env[:key_name], branch1, branch2)
       instance_id = parse_instance_id(response1)
       IO.inspect instance_id
       _ <- wait_running(instance_id)
@@ -42,8 +42,17 @@ defmodule PastryChefTest.BranchesController do
     end
   end
 
-  defp run_ec2_instance(image_id, key_name) do
-    ExAws.EC2.run_instances(image_id, 1, 1, [key_name: key_name, instance_type: "t2.micro"])
+  defp run_ec2_instance(image_id, key_name, branch1, branch2) do
+    ExAws.EC2.run_instances(image_id, 1, 1,
+      [ key_name: key_name,
+        instance_type: "t2.micro",
+        tag_specifications: [
+          { :instance,
+            [ {:project, "pastry-chef"},
+              {:html_dump1, branch1},
+              {:html_dump2, branch2}]
+          }]
+      ])
     |> ExAws.request
   end
 
