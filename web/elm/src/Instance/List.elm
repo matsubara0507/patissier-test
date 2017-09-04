@@ -4,7 +4,7 @@ import Types.RemoteData exposing (RemoteData(..))
 import Utils exposing (warningMessage)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, list, id, value)
+import Html.Attributes exposing (class, href, list, id, value)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as JD exposing (succeed, field, string)
@@ -68,8 +68,7 @@ viewInstances instances =
   div [ class "container mt-4" ]
       [ div [ class "Subhead" ]
             [ h2 [ class "Subhead-heading"] [ text "Exist Instances" ]
-            , p  [ class "Subhead-description"]
-                 [ text "" ]
+            , a [ class "btn btn-primary ml-3", href "/new" ] [ text "New" ]
             ]
       , div [ ]
             [ ul [ class "existing-instances" ] $ List.map viewInstance instances ]
