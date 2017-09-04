@@ -64,16 +64,35 @@ view model =
     Success page -> viewInstances page
 
 viewInstances : Instances -> Html msg
-viewInstances = ul [ class "existing-instances" ] . List.map viewInstance
+viewInstances instances =
+  div [ class "container mt-4" ]
+      [ div [ class "Subhead" ]
+            [ h2 [ class "Subhead-heading"] [ text "Exist Instances" ]
+            , p  [ class "Subhead-description"]
+                 [ text "" ]
+            ]
+      , div [ ]
+            [ ul [ class "existing-instances" ] $ List.map viewInstance instances ]
+      ]
 
 viewInstance : Instance -> Html msg
 viewInstance instance =
   li
-    [ id instance.id ]
-    [ div [] [ text $ instance.id ++ ": " ++ instance.publicIp ]
-    , div [ class "tags" ]
-      $ List.map (\t -> text $ t.key ++ ":" ++ t.value ++ ", ") instance.tags
+    [ class "col-12 d-block width-full py-4 border-bottom"
+    , id instance.id
     ]
+    [ div [ class "d-inline-block mb-1" ]
+          [ h3 [] [ text $ "instance_id: ", text instance.id ] ]
+    , div [ class "f6 text-gray mt-2" ]
+          [ text $ "public ip is " ++ instance.publicIp ]
+    , div [ class "topics-row-container col-9 d-inline-flex flex-wrap flex-items-center f6 my-1" ]
+          $ List.map viewTag instance.tags
+    ]
+
+viewTag : Tag -> Html msg
+viewTag tag =
+  a [ class "topic-tag topic-tag-link f6 my-1" ]
+    [ text $ tag.key ++ ":" ++ tag.value ]
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
