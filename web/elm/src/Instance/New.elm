@@ -5,7 +5,7 @@ import Types.RemoteData exposing (RemoteData(..))
 import Utils exposing (warningMessage)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, list, id, value, type_)
+import Html.Attributes exposing (class, list, maxlength, id, value, size, type_)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as JD exposing (string)
@@ -17,21 +17,24 @@ type alias RepoName = String
 type alias RepoModel = { name : RepoName, branchModel : BS.Model }
 
 type alias Model =
-  { repositories : List RepoModel
+  { name : String
+  , repositories : List RepoModel
   , result : RemoteData String String
   }
 
 type Msg
-  = BranchSelector RepoName BS.Msg
+  = Name String
+  | BranchSelector RepoName BS.Msg
   | FetchResultCreateEnv (Result Http.Error String)
-  | RequestToCreateEnv (List (RepoName, String))
+  | RequestToCreateEnv String (List (RepoName, String))
 
 init : (Model, Cmd Msg)
 init = initModel model
 
 model : Model
 model =
-  { repositories =
+  { name = ""
+  , repositories =
       [ { name = "html-dump1", branchModel = BS.model }
       , { name = "html-dump2", branchModel = BS.model }
       ]
@@ -46,37 +49,45 @@ initModel model =
     |> Cmd.batch
   )
 
-fetchResult : List (RepoName, String) -> Cmd Msg
-fetchResult branchNames =
+fetchResult : String -> List (RepoName, String) -> Cmd Msg
+fetchResult instanceName branchNames =
   let
     apiUrl = "/api/branches"
     body =
       Http.multipartBody
-      $ List.map (uncurry Http.stringPart) branchNames
+      <| (::) (Http.stringPart "name" instanceName)
+      <| List.map (uncurry Http.stringPart) branchNames
     request = Http.post apiUrl body string
   in
     Http.send FetchResultCreateEnv request
 
 view : Model -> Html Msg
 view model =
-  form [] [
-    div [ class "container" ]
+  div [ class "container mt-4" ]
       [ div [ class "Subhead" ]
             [ h2 [ class "Subhead-heading"] [ text "Create an new instance" ]
             , p  [ class "Subhead-description"]
                  [ text "An instance is an environment in which behavior varies depending on the branch you select." ]
             ]
+      , dl [ class "form-group" ]
+           [ dt [] [ label [] [ text "Name" ] ]
+           , dt [] [ input [ class "form-control short"
+                           , maxlength 255
+                           , size 255
+                           , type_ "text"
+                           , onInput Name
+                           ] [] ]
+            ]
       , div [ id "repo-branches" ] (viewContent model)
+      , viewCreateButton model
       , div [ id "result" ] (viewResult model)
       ]
-  ]
 
 viewContent : Model -> List (Html Msg)
 viewContent model =
   let
     viewRepo repo =
       Html.map (BranchSelector repo.name) $ BS.view repo.name repo.branchModel
-    repoToTuple repo = (repo.name, repo.branchModel.selectBranchName)
   in
     [ table [ class "bspace" ]
             [ thead [] [ tr [] [ td [] [ label [] [ text "repository: ", br [] [] ] ]
@@ -84,14 +95,22 @@ viewContent model =
                                ] ]
             , tbody [] $ List.map viewRepo model.repositories
             ]
-    , hr [] []
-    , button
-        [ class "btn btn-primary swatch-green"
-        , type_ "submit"
-        , onClick . RequestToCreateEnv $ List.map repoToTuple model.repositories
-        ]
-        [ text "Create instance" ]
     ]
+
+viewCreateButton : Model -> Html Msg
+viewCreateButton model =
+  let
+    repoToTuple repo = (repo.name, repo.branchModel.selectBranchName)
+  in
+    div []
+      [ hr [] []
+      , button [ class "btn btn-primary"
+               , onClick . RequestToCreateEnv model.name
+                 $ List.map repoToTuple model.repositories
+               ]
+               [ text "Create instance" ]
+      ]
+
 
 viewResult : Model -> List (Html Msg)
 viewResult model =
@@ -116,6 +135,7 @@ viewResult model =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
+    Name name -> ({ model | name = name }, Cmd.none)
     BranchSelector repoName branchMsg ->
       case List.find (\repo -> repo.name == repoName) model.repositories of
         Just repo ->
@@ -127,8 +147,8 @@ update msg model =
       ({ model | result = Success response }, Cmd.none)
     FetchResultCreateEnv (Err error) ->
       ({ model | result = Failure "Something went wrong..." }, Cmd.none)
-    RequestToCreateEnv branches ->
-      (model, fetchResult branches)
+    RequestToCreateEnv name branches ->
+      (model, fetchResult name branches)
 
 updateRepo : RepoName -> BS.Model -> Model -> Model
 updateRepo repoName branchModel model =

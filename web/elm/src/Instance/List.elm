@@ -9,6 +9,8 @@ import Html.Events exposing (..)
 import Http
 import Json.Decode as JD exposing (succeed, field, string)
 import Json.Decode.Extra exposing ((|:))
+import List.Extra as List
+import Maybe as Maybe
 
 import Data.Composition exposing (..)
 
@@ -81,7 +83,9 @@ viewInstance instance =
     , id instance.id
     ]
     [ div [ class "d-inline-block mb-1" ]
-          [ h3 [] [ text $ "instance_id: ", text instance.id ] ]
+          [ h3 [] [ text $ getInstanceName instance ] ]
+    , div [ class "f6 text-gray mt-2" ]
+          [ text $ "instance id is " ++ instance.id ] 
     , div [ class "f6 text-gray mt-2" ]
           [ text $ "public ip is " ++ instance.publicIp ]
     , div [ class "topics-row-container col-9 d-inline-flex flex-wrap flex-items-center f6 my-1" ]
@@ -92,6 +96,11 @@ viewTag : Tag -> Html msg
 viewTag tag =
   a [ class "topic-tag topic-tag-link f6 my-1" ]
     [ text $ tag.key ++ ":" ++ tag.value ]
+
+getInstanceName : Instance -> String
+getInstanceName instance =
+  Maybe.withDefault "" . Maybe.map .value
+  $ List.find (\t -> t.key == "Name") instance.tags
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
