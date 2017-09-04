@@ -55,12 +55,14 @@ view repoName model =
 
 selectBranch : String -> Branches -> Html Msg
 selectBranch repoName branches =
-  div
+  tr
       [ onInput ChangeSelectBranchName ]
-      [ span [] [ text $ repoName ++ ": " ]
-      , select [ class "branch-list", id repoName ]
-          <| (::) (option [ value "" ] [ text "--unselect--" ])
-          <| List.map viewBranch branches
+      [ td [] [ text $ repoName ++ ": ", br [] [] ]
+      , td []
+           [ select [ class "form-select select-sm", id repoName ]
+              <| (::) (option [ value "" ] [ text "--unselect--" ])
+              <| List.map viewBranch branches
+           ]
       ]
 
 viewBranch : Branch -> Html msg

@@ -5,7 +5,7 @@ import Types.RemoteData exposing (RemoteData(..))
 import Utils exposing (warningMessage)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, list, id, value)
+import Html.Attributes exposing (class, list, id, value, type_)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as JD exposing (string)
@@ -59,10 +59,17 @@ fetchResult branchNames =
 
 view : Model -> Html Msg
 view model =
-  div []
-    [ div [ id "repo-branches" ] (viewContent model)
-    , div [ id "result" ] (viewResult model)
-    ]
+  form [] [
+    div [ class "container" ]
+      [ div [ class "Subhead" ]
+            [ h2 [ class "Subhead-heading"] [ text "Create an new instance" ]
+            , p  [ class "Subhead-description"]
+                 [ text "An instance is an environment in which behavior varies depending on the branch you select." ]
+            ]
+      , div [ id "repo-branches" ] (viewContent model)
+      , div [ id "result" ] (viewResult model)
+      ]
+  ]
 
 viewContent : Model -> List (Html Msg)
 viewContent model =
@@ -71,10 +78,19 @@ viewContent model =
       Html.map (BranchSelector repo.name) $ BS.view repo.name repo.branchModel
     repoToTuple repo = (repo.name, repo.branchModel.selectBranchName)
   in
-    [ div [] $ List.map viewRepo model.repositories
+    [ table [ class "bspace" ]
+            [ thead [] [ tr [] [ td [] [ label [] [ text "repository: ", br [] [] ] ]
+                               , td [] [ label [] [ text "branch" ] ]
+                               ] ]
+            , tbody [] $ List.map viewRepo model.repositories
+            ]
+    , hr [] []
     , button
-        [ onClick . RequestToCreateEnv $ List.map repoToTuple model.repositories ]
-        [ text "request!" ]
+        [ class "btn btn-primary swatch-green"
+        , type_ "submit"
+        , onClick . RequestToCreateEnv $ List.map repoToTuple model.repositories
+        ]
+        [ text "Create instance" ]
     ]
 
 viewResult : Model -> List (Html Msg)

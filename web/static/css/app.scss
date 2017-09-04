@@ -1,2 +1,39 @@
 /* This file is for your main application css. */
 @import "primer-css/index.scss";
+
+.Subhead {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px #e1e4e8 solid;
+  -webkit-flex-flow: row wrap;
+  flex-flow: row wrap;
+}
+
+.Subhead-heading {
+  font-size: 24px;
+  font-weight: normal;
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 auto;
+  flex: 1 1 auto;
+}
+
+.Subhead-description {
+  font-size: 14px;
+  color: #586069;
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 100%;
+  flex: 1 100%;
+}
+
+.form-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.bspace {
+  border-spacing: 0 5px;
+  border-collapse: separate;
+}
