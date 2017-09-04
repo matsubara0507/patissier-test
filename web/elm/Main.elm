@@ -5,6 +5,7 @@ import Instance.New as New
 import Routes as Routes exposing (Sitemap(..))
 
 import Html exposing (..)
+import Html.Attributes exposing (class)
 import Navigation exposing (Location)
 
 import Data.Composition exposing (..)
@@ -73,10 +74,23 @@ subscriptions model = Sub.none
 
 view : Model -> Html Msg
 view model =
-  case model.sitemap of
-    HomeR -> Html.map GetInstances $ Instances.view model.instances
-    NewR -> Html.map NewInstance $ New.view model.newInstance
-    NotFoundR -> notFound
+  div [] [ viewHeader,
+    case model.sitemap of
+      HomeR -> Html.map GetInstances $ Instances.view model.instances
+      NewR -> Html.map NewInstance $ New.view model.newInstance
+      NotFoundR -> notFound
+  ]
+
+viewHeader : Html msg
+viewHeader =
+  header [ class "masthead" ]
+         [ div [ class "container" ]
+               [ a [ class "masthead-logo" ]
+                   [ span [ class "mega-octicon octicon-package" ] []
+                   , h1 [] [ text "Patissier" ]
+                   ]
+               ]
+         ]
 
 notFound : Html msg
 notFound =

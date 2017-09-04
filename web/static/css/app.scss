@@ -46,3 +46,17 @@
   background-color: #f1f8ff;
   border-radius: 3px;
 }
+
+.masthead {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+  background-color: #24292e;
+}
+
+.masthead .masthead-logo {
+  display: inline-block;
+  font-size: 1.5rem;
+  color: #fff;
+}
