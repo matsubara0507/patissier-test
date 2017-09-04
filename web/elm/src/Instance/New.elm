@@ -19,6 +19,7 @@ type alias RepoModel = { name : RepoName, branchModel : BS.Model }
 type alias Model =
   { name : String
   , repositories : List RepoModel
+  , requesting : Bool
   , result : RemoteData String String
   }
 
@@ -38,6 +39,7 @@ model =
       [ { name = "html-dump1", branchModel = BS.model }
       , { name = "html-dump2", branchModel = BS.model }
       ]
+  , requesting = False
   , result = NotRequested
   }
 
@@ -107,7 +109,7 @@ viewCreateButton model =
     div []
       [ hr [] []
       , button [ class "btn btn-primary"
-               , if flag then class "" else class "disabled"
+               , if not model.requesting && flag then class "" else class "disabled"
                , onClick . RequestToCreateEnv model.name
                  $ List.map repoToTuple model.repositories
                ]
@@ -139,11 +141,11 @@ update msg model =
         Nothing ->
           ({ model | result = Failure "repo is not found..." }, Cmd.none)
     FetchResultCreateEnv (Ok response) ->
-      ({ model | result = Success response }, Cmd.none)
+      ({ model | requesting = False, result = Success response }, Cmd.none)
     FetchResultCreateEnv (Err error) ->
-      ({ model | result = Failure "Something went wrong..." }, Cmd.none)
+      ({ model | requesting = False, result = Failure "Something went wrong..." }, Cmd.none)
     RequestToCreateEnv name branches ->
-      (model, fetchResult name branches)
+      ({ model | requesting = True }, fetchResult name branches)
 
 updateRepo : RepoName -> BS.Model -> Model -> Model
 updateRepo repoName branchModel model =
