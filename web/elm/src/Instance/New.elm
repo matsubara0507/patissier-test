@@ -101,10 +101,13 @@ viewCreateButton : Model -> Html Msg
 viewCreateButton model =
   let
     repoToTuple repo = (repo.name, repo.branchModel.selectBranchName)
+    flag = List.foldl (&&) True . (::) (model.name /= "")
+         $ List.map (\repo -> repo.branchModel.selectBranchName /= "") model.repositories
   in
     div []
       [ hr [] []
       , button [ class "btn btn-primary"
+               , if flag then class "" else class "disabled"
                , onClick . RequestToCreateEnv model.name
                  $ List.map repoToTuple model.repositories
                ]
