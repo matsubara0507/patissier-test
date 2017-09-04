@@ -5,7 +5,7 @@ import Instance.New as New
 import Routes as Routes exposing (Sitemap(..))
 
 import Html exposing (..)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, href)
 import Navigation exposing (Location)
 
 import Data.Composition exposing (..)
@@ -85,7 +85,7 @@ viewHeader : Html msg
 viewHeader =
   header [ class "masthead" ]
          [ div [ class "container" ]
-               [ a [ class "masthead-logo" ]
+               [ a [ class "masthead-logo", href "/" ]
                    [ span [ class "mega-octicon octicon-package" ] []
                    , h1 [] [ text "Patissier" ]
                    ]
