@@ -48,9 +48,9 @@ view repoName model =
   case model.branches of
     NotRequested -> text ""
     Requesting ->
-      warningMessage "fa fa-spin fa-cog fa-2x fa-fw" "getting branches" (text "")
+      warningMessage "" "getting branches" (text "")
     Failure error ->
-      warningMessage "fa fa-meh-o fa-stack-2x" error (text "")
+      warningMessage "f" error (text "")
     Success page -> selectBranch repoName page
 
 selectBranch : String -> Branches -> Html Msg

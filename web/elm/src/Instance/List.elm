@@ -60,9 +60,9 @@ view model =
   case model.instances of
     NotRequested -> text ""
     Requesting ->
-      warningMessage "fa fa-spin fa-cog fa-2x fa-fw" "getting branches" (text "")
+      warningMessage "" "getting instances" (text "")
     Failure error ->
-      warningMessage "fa fa-meh-o fa-stack-2x" error (text "")
+      warningMessage "" error (text "")
     Success page -> viewInstances page
 
 viewInstances : Instances -> Html msg

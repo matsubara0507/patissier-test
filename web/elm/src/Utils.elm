@@ -7,7 +7,7 @@ import Html.Attributes exposing (class, list, id, value)
 warningMessage : String -> String -> Html msg -> Html msg
 warningMessage iconClasses message content =
     div
-        [ class "warning" ]
+        [ class "flash flash-error mt-3" ]
         [ span
             [ class "fa-stack" ]
             [ i [ class iconClasses ] [] ]

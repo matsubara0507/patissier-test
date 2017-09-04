@@ -121,19 +121,11 @@ viewResult model =
     NotRequested ->
       [ text "" ]
     Requesting ->
-      [ warningMessage
-          "fa fa-spin fa-cog fa-2x fa-fw"
-          "getting branches"
-          (text "aaa")
-      ]
+      [ warningMessage "" "Requesting" (text "") ]
     Failure error ->
-      [ warningMessage
-          "fa fa-meh-o fa-stack-2x"
-          error
-          (text "bbb")
-      ]
+      [ warningMessage "" error (text "") ]
     Success page ->
-      [ div [] [ text page ] ]
+      [ div [ class "flash mt-3" ] [ text page ] ]
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
