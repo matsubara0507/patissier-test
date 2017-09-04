@@ -45,6 +45,7 @@ defmodule PastryChefTest.BranchesController do
   def instances(conn, _param) do
     result = OK.with do
       response <- fetch_ec2_instances_info()
+      IO.inspect response
       instances_info = parse_instances_info(response)
       IO.inspect instances_info
       OK.success instances_info
@@ -106,7 +107,7 @@ defmodule PastryChefTest.BranchesController do
     SweetXml.xpath(response[:body],
       ~x"//instancesSet/item"l,
       instance_id: ~x"//instanceId/text()"s,
-      public_ip: ~x"//publicIp/text()"s,
+      public_ip: ~x"//networkInterfaceSet/item/association/publicIp/text()"s,
       tags: [
         ~x"//tagSet/item"l,
         key: ~x"//key/text()"s,
