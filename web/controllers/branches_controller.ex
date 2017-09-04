@@ -91,7 +91,7 @@ defmodule PastryChefTest.BranchesController do
   end
 
   defp parse_public_ip_address(response) do
-    SweetXml.xpath(response[:body], ~x"//publicIp/text()"s)
+    SweetXml.xpath(response[:body], ~x"//networkInterfaceSet/item/association/publicIp/text()"s)
   end
 
   defp parse_instance_state_name(response) do
