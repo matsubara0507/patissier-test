@@ -109,6 +109,7 @@ defmodule PastryChefTest.BranchesController do
       ~x"//instancesSet/item"l,
       instance_id: ~x"//instanceId/text()"s,
       public_ip: ~x"//networkInterfaceSet/item/association/publicIp/text()"s,
+      state: ~x"//instanceState/name/text()"s,
       tags: [
         ~x"//tagSet/item"l,
         key: ~x"//key/text()"s,

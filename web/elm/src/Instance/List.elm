@@ -4,7 +4,7 @@ import Types.RemoteData exposing (RemoteData(..))
 import Utils exposing (warningMessage)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, href, list, id, value)
+import Html.Attributes exposing (class, href, list, id, style, value)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as JD exposing (succeed, field, string)
@@ -17,6 +17,7 @@ import Data.Composition exposing (..)
 type alias Instance =
   { id : String
   , publicIp : String
+  , state : String
   , tags : List Tag
   }
 type alias Instances = List Instance
@@ -34,6 +35,7 @@ instancesDecorder : JD.Decoder Instances
 instancesDecorder = succeed Instance
                  |: (field "instance_id" string)
                  |: (field "public_ip" string)
+                 |: (field "state" string)
                  |: (field "tags" (JD.list tagDecorder))
                  |> JD.list
 
@@ -85,17 +87,35 @@ viewInstance instance =
     [ div [ class "d-inline-block mb-1" ]
           [ h3 [] [ text $ getInstanceName instance ] ]
     , div [ class "f6 text-gray mt-2" ]
-          [ text $ "instance id is " ++ instance.id ] 
+          [ text $ "instance id is " ++ instance.id ]
     , div [ class "f6 text-gray mt-2" ]
           [ text $ "public ip is " ++ instance.publicIp ]
     , div [ class "topics-row-container col-9 d-inline-flex flex-wrap flex-items-center f6 my-1" ]
           $ List.map viewTag instance.tags
+    , div [ class "f6 text-gray mt-2"]
+          [ span [ class "instance-state-color ml-0"
+                 , style [("backgroundColor", stateColor instance.state)]
+                 ] []
+          , span [ class "ml-1 mr-3" ] [ text instance.state ]
+          ]
     ]
 
 viewTag : Tag -> Html msg
 viewTag tag =
   a [ class "topic-tag topic-tag-link f6 my-1" ]
     [ text $ tag.key ++ ":" ++ tag.value ]
+
+stateColor : String -> String
+stateColor instanceState =
+  case instanceState of
+    "pending" -> "yellow"
+    "running" -> "lawngreen"
+    "shutting-down" -> "yellow"
+    "terminated" -> "red"
+    "stopping" -> "yellow"
+    "stopped" -> "red"
+    _ -> "transparent"
+
 
 getInstanceName : Instance -> String
 getInstanceName instance =
