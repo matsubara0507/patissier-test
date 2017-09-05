@@ -94,26 +94,39 @@ view instanceId model =
             , p  [ class "Subhead-description"]
                  [ text "An instance is an environment in which behavior varies depending on the branch you select." ]
             ]
-      , dl [ class "form-group" ]
-           [ dt [] [ label [] [ text "Name" ] ]
-           , dt [] [ input [ class "form-control short"
-                           , maxlength 255
-                           , size 255
-                           , type_ "text"
-                           , onInput Name
-                           , defaultValue model.name
-                           ] []
-                   , button [ class "btn"
-                            , if not model.requesting then class "" else class "disabled"
-                            , onClick $ Rename instanceId model.name
-                            ]
-                            [ text "Rename" ]
-                   ]
-            ]
-      , div [ id "repo-branches" ] (viewContent model)
-      , viewDeployButton instanceId model
+      , viewRename instanceId model
+      , hr [] []
+      , viewRedeploy instanceId model
       , div [ id "result" ] (viewResult model)
       ]
+
+viewRename : String -> Model -> Html Msg
+viewRename instanceId model =
+  dl [ class "form-group" ]
+     [ dt [] [ label [] [ text "Name" ] ]
+     , dt [] [ input [ class "form-control short"
+                     , maxlength 255
+                     , size 255
+                     , type_ "text"
+                     , onInput Name
+                     , defaultValue model.name
+                     ] []
+             , button [ class "btn"
+                      , if not model.requesting then class "" else class "disabled"
+                      , onClick $ Rename instanceId model.name
+                      ]
+                      [ text "Rename" ]
+             ]
+     ]
+
+viewRedeploy : String -> Model -> Html Msg
+viewRedeploy instanceId model =
+  dl [ class "form-group" ]
+     [ dt [] [ label [] [ text "Deploy" ] ]
+     , dt [] [ div [ id "repo-branches" ] (viewContent model)
+             , viewDeployButton instanceId model
+             ]
+     ]
 
 viewContent : Model -> List (Html Msg)
 viewContent model =
@@ -137,15 +150,13 @@ viewDeployButton instanceId model =
          $ List.map (\repo -> repo.branchModel.selectBranchName /= "") model.repositories
   in
     div []
-      [ hr [] []
-      , button [ class "btn btn-primary"
+      [ button [ class "btn btn-primary mt-2"
                , if not model.requesting && flag then class "" else class "disabled"
                , onClick . RequestToDeployEnv instanceId
                  $ List.map repoToTuple model.repositories
                ]
                [ text "Deploy instance" ]
       ]
-
 
 viewResult : Model -> List (Html Msg)
 viewResult model =
