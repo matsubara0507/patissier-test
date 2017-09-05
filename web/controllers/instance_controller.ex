@@ -25,14 +25,7 @@ defmodule PastryChefTest.InstanceController do
     branch2 = params["html-dump2"]
     result = OK.with do
       _ <- update_ec2_instance_tags(id, [{:html_dump1, branch1}, {:html_dump2, branch2}])
-      response <- fetch_ec2_instances_info(id)
-      public_ip_address = parse_public_ip_address(response)
-      IO.inspect public_ip_address
-      conn <- connect_ssh_repeat(public_ip_address, env[:key_path])
-      IO.inspect "ssh success!"
-      dir = "/home/ec2-user/"
-      SSHEx.cmd! conn, "echo '#{branch1} and #{branch2}' > #{dir}/index.html"
-      OK.success "run `ssh -i #{env[:key_path]}/id_rsa ec2-user@#{public_ip_address} cat index.html`"
+      deploy_ec2_instance(id, env[:key_path], branch1, branch2)
     end
     case result do
       {:ok, term} ->
@@ -55,15 +48,7 @@ defmodule PastryChefTest.InstanceController do
       IO.inspect "instance is running!"
       _ <- wait_status_ok(instance_id)
       IO.inspect "instance status is OK!"
-      response2 <- fetch_ec2_instances_info(instance_id)
-      public_ip_address = parse_public_ip_address(response2)
-      IO.inspect public_ip_address
-      # IO.inspect System.cmd("ping", ["-c", "1", public_ip_address])
-      conn <- connect_ssh_repeat(public_ip_address, env[:key_path])
-      IO.inspect "ssh success!"
-      dir = "/home/ec2-user/"
-      SSHEx.cmd! conn, "echo '#{branch1} and #{branch2}' > #{dir}/index.html"
-      OK.success "run `ssh -i #{env[:key_path]}/id_rsa ec2-user@#{public_ip_address} cat index.html`"
+      deploy_ec2_instance(instance_id, env[:key_path], branch1, branch2)
     end
     case result do
       {:ok, term} ->
@@ -121,6 +106,19 @@ defmodule PastryChefTest.InstanceController do
   defp update_ec2_instance_tags(instance_id, tags) do
     ExAws.EC2.create_tags([instance_id], tags)
     |> ExAws.request
+  end
+
+  defp deploy_ec2_instance(instance_id, key_path, branch1, branch2) do
+    OK.with do
+      response <- fetch_ec2_instances_info(instance_id)
+      public_ip_address = parse_public_ip_address(response)
+      IO.inspect public_ip_address
+      conn <- connect_ssh_repeat(public_ip_address, key_path)
+      IO.inspect "ssh success!"
+      dir = "/home/ec2-user/"
+      SSHEx.cmd! conn, "echo '#{branch1} and #{branch2}' > #{dir}/index.html"
+      OK.success "run `ssh -i #{key_path}/id_rsa ec2-user@#{public_ip_address} cat index.html`"
+    end
   end
 
   defp parse_instance_id(response) do
