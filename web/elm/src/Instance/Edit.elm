@@ -32,8 +32,8 @@ type Msg
   | BranchSelector RepoName BS.Msg
   | FetchInstance (Result Http.Error Instance)
   | FetchRename (Result Http.Error String)
-  | FetchResultCreateEnv (Result Http.Error String)
-  | RequestToCreateEnv String (List (RepoName, String))
+  | FetchResultDeployEnv (Result Http.Error String)
+  | RequestToDeployEnv String (List (RepoName, String))
 
 init : Instance -> (Model, Cmd Msg)
 init = flip initModel model . .id
@@ -76,7 +76,7 @@ fetchResult instanceId branchNames =
       <| List.map (uncurry Http.stringPart) branchNames
     request = put apiUrl body string
   in
-    Http.send FetchResultCreateEnv request
+    Http.send FetchResultDeployEnv request
 
 fetchRename : String -> String -> Cmd Msg
 fetchRename instanceId instanceName =
@@ -140,7 +140,7 @@ viewDeployButton instanceId model =
       [ hr [] []
       , button [ class "btn btn-primary"
                , if not model.requesting && flag then class "" else class "disabled"
-               , onClick . RequestToCreateEnv instanceId
+               , onClick . RequestToDeployEnv instanceId
                  $ List.map repoToTuple model.repositories
                ]
                [ text "Deploy instance" ]
@@ -178,11 +178,11 @@ update msg model =
       ({ model | requesting = False, result = Success response }, Cmd.none)
     FetchRename (Err error) ->
       ({ model | requesting = False, result = Failure "Something went wrong..." }, Cmd.none)
-    FetchResultCreateEnv (Ok response) ->
+    FetchResultDeployEnv (Ok response) ->
       ({ model | requesting = False, result = Success response }, Cmd.none)
-    FetchResultCreateEnv (Err error) ->
+    FetchResultDeployEnv (Err error) ->
       ({ model | requesting = False, result = Failure "Something went wrong..." }, Cmd.none)
-    RequestToCreateEnv instanceId branches ->
+    RequestToDeployEnv instanceId branches ->
       ({ model | requesting = True }, fetchResult instanceId branches)
 
 updateRepo : RepoName -> BS.Model -> Model -> Model
