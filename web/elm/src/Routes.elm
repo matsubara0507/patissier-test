@@ -1,17 +1,19 @@
 module Routes exposing (Sitemap(..), parsePath, navigateTo, toString)
 
 import Navigation exposing (Location)
-import Route exposing (..)
+import Route exposing ((:=))
+
+import Data.Composition exposing (..)
 
 type Sitemap
   = HomeR
   | NewR
   | NotFoundR
 
-homeR = HomeR := static ""
-newR = NewR := static "new"
+homeR = HomeR := Route.static ""
+newR = NewR := Route.static "new"
 
-sitemap = router [ homeR, newR ]
+sitemap = Route.router [ homeR, newR ]
 
 match : String -> Sitemap
 match = Route.match sitemap >> Maybe.withDefault NotFoundR
@@ -19,12 +21,12 @@ match = Route.match sitemap >> Maybe.withDefault NotFoundR
 toString : Sitemap -> String
 toString r =
   case r of
-    HomeR -> reverse homeR []
-    NewR -> reverse newR []
+    HomeR -> Route.reverse homeR []
+    NewR -> Route.reverse newR []
     NotFoundR -> Debug.crash "cannot render NotFound"
 
 parsePath : Location -> Sitemap
-parsePath = .pathname >> match
+parsePath = match . .pathname
 
 navigateTo : Sitemap -> Cmd msg
-navigateTo = toString >> Navigation.newUrl
+navigateTo = Navigation.newUrl . toString

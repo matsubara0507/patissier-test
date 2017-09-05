@@ -28,6 +28,7 @@ type alias Model =
 
 type Msg
     = RouteChanged Sitemap
+    | RouteTo Sitemap
     | GetInstances Instances.Msg
     | NewInstance New.Msg
 
@@ -43,13 +44,13 @@ init location =
       }
 
 parseRoute : Location -> Msg
-parseRoute =
-    Routes.parsePath >> RouteChanged
+parseRoute = RouteChanged . Routes.parsePath
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     RouteChanged route -> handleRoute route model
+    RouteTo route -> (model, Routes.navigateTo route)
     GetInstances instancesMsg ->
       (\m -> { model | instances = m}) *** Cmd.map GetInstances
       $ Instances.update instancesMsg model.instances
@@ -82,12 +83,13 @@ view model =
       NotFoundR -> notFound
   ]
 
-viewHeader : Html msg
+viewHeader : Html Msg
 viewHeader =
   header [ class "masthead" ]
          [ div [ class "container" ]
                [ a [ class "masthead-logo"
-                   , onClick $ RouteChanged HomeR ]
+                   , href $ Routes.toString HomeR
+                   , onClick $ RouteTo HomeR ]
                    [ span [ class "mega-octicon octicon-package" ] []
                    , h1 [] [ text "Patissier" ]
                    ]

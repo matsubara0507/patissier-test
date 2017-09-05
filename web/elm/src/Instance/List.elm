@@ -2,6 +2,7 @@ module Instance.List exposing (..)
 
 import Types.RemoteData exposing (RemoteData(..))
 import Utils exposing (warningMessage)
+import Routes exposing (Sitemap(NewR))
 
 import Html exposing (..)
 import Html.Attributes exposing (class, href, list, id, style, value)
@@ -72,7 +73,9 @@ viewInstances instances =
   div [ class "container mt-4" ]
       [ div [ class "Subhead" ]
             [ h2 [ class "Subhead-heading"] [ text "Exist Instances" ]
-            , a [ class "btn btn-primary ml-3", href "/new" ] [ text "New" ]
+            , a [ class "btn btn-primary ml-3"
+                , href $ Routes.toString NewR ]
+                [ text "New" ]
             ]
       , div [ ]
             [ ul [ class "existing-instances" ] $ List.map viewInstance instances ]
