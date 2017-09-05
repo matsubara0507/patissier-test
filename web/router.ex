@@ -18,6 +18,7 @@ defmodule PastryChefTest.Router do
 
     get "/", PageController, :index
     get "/new", PageController, :index
+    get "/edit/:id", PageController, :index
   end
 
   # Other scopes may use custom stacks.
@@ -25,7 +26,10 @@ defmodule PastryChefTest.Router do
     pipe_through :api
 
     get "/branches", BranchesController, :branches
+
+    get "/instance/:id", InstanceController, :show
     post "/instance", InstanceController, :create
+    put "/instance/:id", InstanceController, :deploy
     get "/instances", InstanceController, :instances
   end
 end

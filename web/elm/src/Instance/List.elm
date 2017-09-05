@@ -1,8 +1,9 @@
 module Instance.List exposing (..)
 
+import Instance exposing (..)
 import Types.RemoteData exposing (RemoteData(..))
 import Utils exposing (warningMessage)
-import Routes exposing (Sitemap(NewR))
+import Routes exposing (Sitemap(NewR, EditR))
 
 import Html exposing (..)
 import Html.Attributes exposing (class, href, list, id, style, value)
@@ -15,35 +16,12 @@ import Maybe as Maybe
 
 import Data.Composition exposing (..)
 
-type alias Instance =
-  { id : String
-  , publicIp : String
-  , state : String
-  , tags : List Tag
-  }
-type alias Instances = List Instance
-
-type alias Tag = { key : String, value : String }
-
 type alias Model =
   { instances : RemoteData String Instances
   }
 
 type Msg
   = FetchInstances (Result Http.Error Instances)
-
-instancesDecorder : JD.Decoder Instances
-instancesDecorder = succeed Instance
-                 |: (field "instance_id" string)
-                 |: (field "public_ip" string)
-                 |: (field "state" string)
-                 |: (field "tags" (JD.list tagDecorder))
-                 |> JD.list
-
-tagDecorder : JD.Decoder Tag
-tagDecorder = succeed Tag
-           |: (field "key" string)
-           |: (field "value" string)
 
 model : Model
 model =
@@ -88,7 +66,9 @@ viewInstance instance =
     , id instance.id
     ]
     [ div [ class "d-inline-block mb-1" ]
-          [ h3 [] [ text $ getInstanceName instance ] ]
+          [ h3 [] [ a [ href $ Routes.toString (EditR instance.id) ]
+                      [ text $ getInstanceName instance ]
+                  ] ]
     , div [ class "f6 text-gray mt-2" ]
           [ text $ "instance id is " ++ instance.id ]
     , div [ class "f6 text-gray mt-2" ]
@@ -107,23 +87,6 @@ viewTag : Tag -> Html msg
 viewTag tag =
   a [ class "topic-tag topic-tag-link f6 my-1" ]
     [ text $ tag.key ++ ":" ++ tag.value ]
-
-stateColor : String -> String
-stateColor instanceState =
-  case instanceState of
-    "pending" -> "yellow"
-    "running" -> "lawngreen"
-    "shutting-down" -> "yellow"
-    "terminated" -> "red"
-    "stopping" -> "yellow"
-    "stopped" -> "red"
-    _ -> "transparent"
-
-
-getInstanceName : Instance -> String
-getInstanceName instance =
-  Maybe.withDefault "" . Maybe.map .value
-  $ List.find (\t -> t.key == "Name") instance.tags
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =

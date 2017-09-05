@@ -4,7 +4,7 @@ import Types.RemoteData exposing (RemoteData(..))
 import Utils exposing (warningMessage)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, list, id, value)
+import Html.Attributes exposing (class, list, id, selected, value)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as JD exposing (succeed, field, string)
@@ -51,23 +51,25 @@ view repoName model =
       warningMessage "" "getting branches" (text "")
     Failure error ->
       warningMessage "f" error (text "")
-    Success page -> selectBranch repoName page
+    Success page -> selectBranch repoName model.selectBranchName page
 
-selectBranch : String -> Branches -> Html Msg
-selectBranch repoName branches =
+selectBranch : String -> String -> Branches -> Html Msg
+selectBranch repoName selectBranchName branches =
   tr
       [ onInput ChangeSelectBranchName ]
       [ td [] [ text $ repoName ++ ": ", br [] [] ]
       , td []
            [ select [ class "form-select select-sm", id repoName ]
-              <| (::) (option [ value "" ] [ text "--unselect--" ])
-              <| List.map viewBranch branches
+              <| List.map (viewBranch selectBranchName) branches
            ]
       ]
 
-viewBranch : Branch -> Html msg
-viewBranch branch =
-  option [ value branch.name ] [ text branch.name ]
+viewBranch : String -> Branch -> Html msg
+viewBranch selectBranchName branch =
+  option [ value branch.name
+         , selected $ branch.name == selectBranchName
+         ]
+         [ text branch.name ]
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =

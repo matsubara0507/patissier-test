@@ -3,11 +3,50 @@ defmodule PastryChefTest.InstanceController do
   import SweetXml
   use PastryChefTest.Web, :controller
 
-  def create(conn, params) do
+  def show(conn, %{"id" => id}) do
+    result = OK.with do
+      response <- fetch_ec2_instances_info(id)
+      case parse_instances_info(response) do
+        [ ] -> OK.failure "#{id} is not found..."
+        [ instance_info | _ ] -> OK.success instance_info
+      end
+    end
+    case result do
+      {:ok, term} ->
+        render conn, instance: term
+      {:error, term} ->
+        render conn, message: "error: #{inspect(term)}"
+    end
+  end
+
+  def deploy(conn, params = %{"id" => id}) do
     env = Application.get_env(:pastry_chef_test, PastryChefTest.BranchesController)
-    name = params["name"]
     branch1 = params["html-dump1"]
     branch2 = params["html-dump2"]
+    result = OK.with do
+      _ <- update_ec2_instance_tags(id, [{:html_dump1, branch1}, {:html_dump2, branch2}])
+      response <- fetch_ec2_instances_info(id)
+      public_ip_address = parse_public_ip_address(response)
+      IO.inspect public_ip_address
+      conn <- connect_ssh_repeat(public_ip_address, env[:key_path])
+      IO.inspect "ssh success!"
+      dir = "/home/ec2-user/"
+      SSHEx.cmd! conn, "echo '#{branch1} and #{branch2}' > #{dir}/index.html"
+      OK.success "run `ssh -i #{env[:key_path]}/id_rsa ec2-user@#{public_ip_address} cat index.html`"
+    end
+    case result do
+      {:ok, term} ->
+        render conn, message: "success! branch1: #{branch1}, branch2: #{branch2}\n#{inspect(term)}"
+      {:error, term} ->
+        render conn, message: "error: #{inspect(term)}"
+    end
+  end
+
+  def create(conn, params) do
+    env = Application.get_env(:pastry_chef_test, PastryChefTest.BranchesController)
+    branch1 = params["html-dump1"]
+    branch2 = params["html-dump2"]
+    name = params["name"]
     result = OK.with do
       response1 <- run_ec2_instance(env[:image_id], env[:key_name], name, branch1, branch2)
       instance_id = parse_instance_id(response1)
@@ -16,7 +55,7 @@ defmodule PastryChefTest.InstanceController do
       IO.inspect "instance is running!"
       _ <- wait_status_ok(instance_id)
       IO.inspect "instance status is OK!"
-      response2 <- fetch_ec2_instance_info(instance_id)
+      response2 <- fetch_ec2_instances_info(instance_id)
       public_ip_address = parse_public_ip_address(response2)
       IO.inspect public_ip_address
       # IO.inspect System.cmd("ping", ["-c", "1", public_ip_address])
@@ -64,7 +103,7 @@ defmodule PastryChefTest.InstanceController do
     |> ExAws.request
   end
 
-  defp fetch_ec2_instance_info(instance_id) do
+  defp fetch_ec2_instances_info(instance_id) do
     ExAws.EC2.describe_instances([instance_ids: [instance_id]])
     |> ExAws.request
   end
@@ -76,6 +115,11 @@ defmodule PastryChefTest.InstanceController do
 
   defp fetch_ec2_instance_status(instance_id) do
     ExAws.EC2.describe_instance_status([instance_ids: [instance_id]])
+    |> ExAws.request
+  end
+
+  defp update_ec2_instance_tags(instance_id, tags) do
+    ExAws.EC2.create_tags([instance_id], tags)
     |> ExAws.request
   end
 
@@ -113,7 +157,7 @@ defmodule PastryChefTest.InstanceController do
     :timer.sleep(2000)
     IO.inspect "wait..."
     OK.with do
-      response <- fetch_ec2_instance_info(instance_id)
+      response <- fetch_ec2_instances_info(instance_id)
       case parse_instance_state_name(response) do
         "running" -> OK.success(nil)
         "terminated" -> OK.failure("terminated...")

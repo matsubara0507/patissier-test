@@ -2,11 +2,14 @@ module Main exposing (..)
 
 import Instance.List as Instances
 import Instance.New as New
+import Instance.Edit as Edit
 import Routes as Routes exposing (Sitemap(..))
+import Types.RemoteData exposing (RemoteData(..))
 
 import Html exposing (..)
 import Html.Attributes exposing (class, href)
 import Html.Events exposing (..)
+import List.Extra as List
 import Navigation exposing (Location)
 
 import Data.Composition exposing (..)
@@ -24,6 +27,7 @@ type alias Model =
   { sitemap : Sitemap
   , instances : Instances.Model
   , newInstance : New.Model
+  , editInstance : Edit.Model
   }
 
 type Msg
@@ -31,6 +35,7 @@ type Msg
     | RouteTo Sitemap
     | GetInstances Instances.Msg
     | NewInstance New.Msg
+    | EditInstance Edit.Msg
 
 init : Location -> (Model, Cmd Msg)
 init location =
@@ -41,6 +46,7 @@ init location =
       { sitemap = route
       , instances = Instances.model
       , newInstance = New.model
+      , editInstance = Edit.model
       }
 
 parseRoute : Location -> Msg
@@ -57,6 +63,9 @@ update msg model =
     NewInstance newInstanceMsg ->
       (\m -> { model | newInstance = m}) *** Cmd.map NewInstance
       $ New.update newInstanceMsg model.newInstance
+    EditInstance editInstanceMsg ->
+      (\m -> { model | editInstance = m }) *** Cmd.map EditInstance
+      $ Edit.update editInstanceMsg model.editInstance
 
 handleRoute : Sitemap -> Model -> (Model, Cmd Msg)
 handleRoute route m =
@@ -68,6 +77,9 @@ handleRoute route m =
       NewR ->
         (\m -> { model | newInstance = m }) *** Cmd.map NewInstance
         $ New.initModel model.newInstance
+      EditR instanceId ->
+        (\m -> { model | editInstance = m }) *** Cmd.map EditInstance
+        $ Edit.initModel instanceId model.editInstance        
       _ -> (model, Cmd.none)
 
 subscriptions : Model -> Sub msg
@@ -80,6 +92,8 @@ view model =
     case model.sitemap of
       HomeR -> Html.map GetInstances $ Instances.view model.instances
       NewR -> Html.map NewInstance $ New.view model.newInstance
+      EditR instanceId ->
+        Html.map EditInstance $ Edit.view instanceId model.editInstance
       NotFoundR -> notFound
   ]
 
