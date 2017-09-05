@@ -37,6 +37,18 @@ defmodule PastryChefTest.InstanceController do
     end
   end
 
+  def rename(conn, %{"id" => id, "name" => name}) do
+    result = OK.with do
+      EC2.update_ec2_instance_tags(id, [{:Name, name}])
+    end
+    case result do
+      {:ok, _} ->
+        render conn, message: "success! rename to #{name}"
+      {:error, term} ->
+        render conn, message: "error: #{inspect(term)}"
+    end
+  end
+
   def create(conn, params) do
     env = Application.get_env(:pastry_chef_test, PastryChefTest.InstanceController)
     branch1 = params["html-dump1"]

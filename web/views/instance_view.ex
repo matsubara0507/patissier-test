@@ -5,6 +5,8 @@ defmodule PastryChefTest.InstanceView do
 
   def render("deploy.json", %{message: message}), do: message
 
+  def render("rename.json", %{message: message}), do: message
+
   def render("show.json", %{instance: instance}), do: instance
   def render("show.json", %{message: message}), do: message
 

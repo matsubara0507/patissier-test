@@ -30,6 +30,7 @@ defmodule PastryChefTest.Router do
     get "/instance/:id", InstanceController, :show
     post "/instance", InstanceController, :create
     put "/instance/:id", InstanceController, :deploy
+    put "/instance/:id/rename/:name", InstanceController, :rename
     get "/instances", InstanceController, :instances
   end
 end

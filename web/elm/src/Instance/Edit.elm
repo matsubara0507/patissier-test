@@ -3,7 +3,7 @@ module Instance.Edit exposing (..)
 import BranchSelector as BS
 import Instance exposing (..)
 import Types.RemoteData exposing (RemoteData(..))
-import Utils exposing (warningMessage)
+import Utils exposing (warningMessage, put)
 
 import Html exposing (..)
 import Html.Attributes exposing ( class, defaultValue, list, maxlength
@@ -28,8 +28,10 @@ type alias Model =
 
 type Msg
   = Name String
+  | Rename String String
   | BranchSelector RepoName BS.Msg
   | FetchInstance (Result Http.Error Instance)
+  | FetchRename (Result Http.Error String)
   | FetchResultCreateEnv (Result Http.Error String)
   | RequestToCreateEnv String (List (RepoName, String))
 
@@ -68,16 +70,6 @@ fetchInstance instanceId =
 fetchResult : String -> List (RepoName, String) -> Cmd Msg
 fetchResult instanceId branchNames =
   let
-    put url body decoder =
-      Http.request
-        { method = "PUT"
-        , headers = []
-        , url = url
-        , body = body
-        , expect = Http.expectJson decoder
-        , timeout = Nothing
-        , withCredentials = False
-        }
     apiUrl = "/api/instance/" ++ instanceId
     body =
       Http.multipartBody
@@ -85,6 +77,14 @@ fetchResult instanceId branchNames =
     request = put apiUrl body string
   in
     Http.send FetchResultCreateEnv request
+
+fetchRename : String -> String -> Cmd Msg
+fetchRename instanceId instanceName =
+  let
+    apiUrl = "/api/instance/" ++ instanceId ++ "/rename/" ++ instanceName
+    request = put apiUrl Http.emptyBody string
+  in
+    Http.send FetchRename request
 
 view : String -> Model -> Html Msg
 view instanceId model =
@@ -102,7 +102,13 @@ view instanceId model =
                            , type_ "text"
                            , onInput Name
                            , defaultValue model.name
-                           ] [] ]
+                           ] []
+                   , button [ class "btn"
+                            , if not model.requesting then class "" else class "disabled"
+                            , onClick $ Rename instanceId model.name
+                            ]
+                            [ text "Rename" ]
+                   ]
             ]
       , div [ id "repo-branches" ] (viewContent model)
       , viewDeployButton instanceId model
@@ -156,7 +162,8 @@ viewResult model =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    Name name -> ({ model | name = name }, Cmd.none)
+    Name name -> ({ model | requesting = True, name = name }, Cmd.none)
+    Rename instanceId name -> (model, fetchRename instanceId name)
     BranchSelector repoName branchMsg ->
       case List.find (\repo -> repo.name == repoName) model.repositories of
         Just repo ->
@@ -167,6 +174,10 @@ update msg model =
     FetchInstance (Ok instance) -> (updateInstance instance model, Cmd.none)
     FetchInstance (Err error) ->
       ({ model | instance = Failure "Something went wrong..." }, Cmd.none)
+    FetchRename (Ok response) ->
+      ({ model | requesting = False, result = Success response }, Cmd.none)
+    FetchRename (Err error) ->
+      ({ model | requesting = False, result = Failure "Something went wrong..." }, Cmd.none)
     FetchResultCreateEnv (Ok response) ->
       ({ model | requesting = False, result = Success response }, Cmd.none)
     FetchResultCreateEnv (Err error) ->
