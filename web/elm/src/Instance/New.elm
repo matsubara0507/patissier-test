@@ -54,7 +54,7 @@ initModel model =
 fetchResult : String -> List (RepoName, String) -> Cmd Msg
 fetchResult instanceName branchNames =
   let
-    apiUrl = "/api/branches"
+    apiUrl = "/api/instance"
     body =
       Http.multipartBody
       <| (::) (Http.stringPart "name" instanceName)
