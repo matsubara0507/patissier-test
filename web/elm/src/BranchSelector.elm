@@ -60,6 +60,7 @@ selectBranch repoName selectBranchName branches =
       [ td [] [ text $ repoName ++ ": ", br [] [] ]
       , td []
            [ select [ class "form-select select-sm", id repoName ]
+              <| (::) (option [ value "" ] [ text "--unselect--" ])
               <| List.map (viewBranch selectBranchName) branches
            ]
       ]
