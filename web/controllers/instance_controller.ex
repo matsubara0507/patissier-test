@@ -20,7 +20,7 @@ defmodule PastryChefTest.InstanceController do
   end
 
   def deploy(conn, params = %{"id" => id}) do
-    env = Application.get_env(:pastry_chef_test, PastryChefTest.BranchesController)
+    env = Application.get_env(:pastry_chef_test, PastryChefTest.InstanceController)
     branch1 = params["html-dump1"]
     branch2 = params["html-dump2"]
     result = OK.with do
@@ -43,7 +43,7 @@ defmodule PastryChefTest.InstanceController do
   end
 
   def create(conn, params) do
-    env = Application.get_env(:pastry_chef_test, PastryChefTest.BranchesController)
+    env = Application.get_env(:pastry_chef_test, PastryChefTest.InstanceController)
     branch1 = params["html-dump1"]
     branch2 = params["html-dump2"]
     name = params["name"]

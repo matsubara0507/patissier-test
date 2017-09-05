@@ -19,7 +19,9 @@ config :logger, :console,
   metadata: [:request_id]
 
 config :pastry_chef_test, PastryChefTest.BranchesController,
-  github_auth_token: System.get_env("GITHUB_AUTH_TOKEN"),
+  github_auth_token: System.get_env("GITHUB_AUTH_TOKEN")
+
+config :pastry_chef_test, PastryChefTest.InstanceController,
   image_id: System.get_env("IMAGE_ID"),
   key_name: System.get_env("KEY_NAME"),
   key_path: System.get_env("KEY_PATH")
