@@ -24,8 +24,8 @@ type Msg
   = FetchBranches (Result Http.Error Branches)
   | ChangeSelectBranchName String
 
-branchesDecorder : JD.Decoder Branches
-branchesDecorder = succeed Branch
+branchesDecoder : JD.Decoder Branches
+branchesDecoder = succeed Branch
                  |: (field "name" string)
                  |> JD.list
 
@@ -39,7 +39,7 @@ fetchBranch : String -> Cmd Msg
 fetchBranch repo =
   let
     apiUrl = "/api/branches?" ++ repo
-    request = Http.get apiUrl branchesDecorder
+    request = Http.get apiUrl branchesDecoder
   in
     Http.send FetchBranches request
 

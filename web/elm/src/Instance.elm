@@ -26,13 +26,13 @@ instanceDecoder = succeed Instance
                |: (field "instance_id" string)
                |: (field "public_ip" string)
                |: (field "state" string)
-               |: (field "tags" (JD.list tagDecorder))
+               |: (field "tags" (JD.list tagDecoder))
 
-instancesDecorder : JD.Decoder Instances
-instancesDecorder = JD.list instanceDecoder 
+instancesDecoder : JD.Decoder Instances
+instancesDecoder = JD.list instanceDecoder 
 
-tagDecorder : JD.Decoder Tag
-tagDecorder = succeed Tag
+tagDecoder : JD.Decoder Tag
+tagDecoder = succeed Tag
            |: (field "key" string)
            |: (field "value" string)
 

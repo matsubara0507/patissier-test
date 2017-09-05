@@ -32,7 +32,7 @@ fetchInstances : Cmd Msg
 fetchInstances =
   let
     apiUrl = "/api/instances"
-    request = Http.get apiUrl instancesDecorder
+    request = Http.get apiUrl instancesDecoder
   in
     Http.send FetchInstances request
 
