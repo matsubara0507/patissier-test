@@ -116,6 +116,7 @@ defmodule PastryChefTest.InstanceController do
       response <- fetch_ec2_instance_info(instance_id)
       case parse_instance_state_name(response) do
         "running" -> OK.success(nil)
+        "terminated" -> OK.failure("terminated...")
         _ -> wait_running(instance_id)
       end
     end
