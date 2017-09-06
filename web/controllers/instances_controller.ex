@@ -1,9 +1,24 @@
-defmodule PastryChefTest.InstanceController do
+defmodule PastryChefTest.InstancesController do
   require OK
   use PastryChefTest.Web, :controller
   alias PastryChefTest.EC2, as: EC2
 
-  def show(conn, %{"id" => id}) do
+  def instances(conn, _param) do
+    result = OK.with do
+      response <- EC2.fetch_ec2_instances_info()
+      instances_info = EC2.parse_instances_info(response)
+      IO.inspect instances_info
+      OK.success instances_info
+    end
+    case result do
+      {:ok, term} ->
+        render conn, instances: term
+      {:error, term} ->
+        render conn, message: "error: #{inspect(term)}"
+    end
+  end
+
+  def instance(conn, %{"id" => id}) do
     result = OK.with do
       response <- EC2.fetch_ec2_instances_info(id)
       case EC2.parse_instances_info(response) do
@@ -18,37 +33,7 @@ defmodule PastryChefTest.InstanceController do
         render conn, message: "error: #{inspect(term)}"
     end
   end
-
-  def deploy(conn, params = %{"id" => id}) do
-    env = Application.get_env(:pastry_chef_test, PastryChefTest.InstanceController)
-    branch1 = params["html-dump1"]
-    branch2 = params["html-dump2"]
-    result = OK.with do
-      tags = [{:html_dump1, branch1}, {:html_dump2, branch2}]
-      _ <- EC2.update_ec2_instance_tags(id, tags)
-      dir = "/home/ec2-user/"
-      EC2.deploy_ec2_instance(id, env[:key_path], "echo '#{branch1} and #{branch2}' > #{dir}/index.html")
-    end
-    case result do
-      {:ok, term} ->
-        render conn, message: "success! branch1: #{branch1}, branch2: #{branch2}\n#{term} cat index.html"
-      {:error, term} ->
-        render conn, message: "error: #{inspect(term)}"
-    end
-  end
-
-  def rename(conn, %{"id" => id, "name" => name}) do
-    result = OK.with do
-      EC2.update_ec2_instance_tags(id, [{:Name, name}])
-    end
-    case result do
-      {:ok, _} ->
-        render conn, message: "success! rename to #{name}"
-      {:error, term} ->
-        render conn, message: "error: #{inspect(term)}"
-    end
-  end
-
+  
   def create(conn, params) do
     env = Application.get_env(:pastry_chef_test, PastryChefTest.InstanceController)
     branch1 = params["html-dump1"]
@@ -73,25 +58,40 @@ defmodule PastryChefTest.InstanceController do
     end
   end
 
-  def delete(conn, %{"id" => id}) do
-    case EC2.terminate_ec2_instance(id) do
-      {:ok, _term} ->
-        render conn, message: "success!"
+  def rename(conn, %{"id" => id, "name" => name}) do
+    result = OK.with do
+      EC2.update_ec2_instance_tags(id, [{:Name, name}])
+    end
+    case result do
+      {:ok, _} ->
+        render conn, message: "success! rename to #{name}"
       {:error, term} ->
         render conn, message: "error: #{inspect(term)}"
     end
   end
 
-  def instances(conn, _param) do
+  def deploy(conn, params = %{"id" => id}) do
+    env = Application.get_env(:pastry_chef_test, PastryChefTest.InstanceController)
+    branch1 = params["html-dump1"]
+    branch2 = params["html-dump2"]
     result = OK.with do
-      response <- EC2.fetch_ec2_instances_info()
-      instances_info = EC2.parse_instances_info(response)
-      IO.inspect instances_info
-      OK.success instances_info
+      tags = [{:html_dump1, branch1}, {:html_dump2, branch2}]
+      _ <- EC2.update_ec2_instance_tags(id, tags)
+      dir = "/home/ec2-user/"
+      EC2.deploy_ec2_instance(id, env[:key_path], "echo '#{branch1} and #{branch2}' > #{dir}/index.html")
     end
     case result do
       {:ok, term} ->
-        render conn, instances: term
+        render conn, message: "success! branch1: #{branch1}, branch2: #{branch2}\n#{term} cat index.html"
+      {:error, term} ->
+        render conn, message: "error: #{inspect(term)}"
+    end
+  end
+
+  def delete(conn, %{"id" => id}) do
+    case EC2.terminate_ec2_instance(id) do
+      {:ok, _term} ->
+        render conn, message: "success!"
       {:error, term} ->
         render conn, message: "error: #{inspect(term)}"
     end

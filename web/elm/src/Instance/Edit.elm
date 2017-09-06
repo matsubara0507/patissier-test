@@ -67,7 +67,7 @@ initModel instanceId model =
 fetchInstance : String -> Cmd Msg
 fetchInstance instanceId =
   let
-    apiUrl = "/api/instance/" ++ instanceId
+    apiUrl = "/api/instances/" ++ instanceId
     request = Http.get apiUrl instanceDecoder
   in
     Http.send FetchInstance request
@@ -79,14 +79,14 @@ toRequest : String -> ButtonAction -> Http.Request String
 toRequest instanceId action =
   case action of
     Rename name ->
-      put ("/api/instance/" ++ instanceId ++ "/rename/" ++ name) Http.emptyBody string
+      put ("/api/instances/" ++ instanceId ++ "/rename/" ++ name) Http.emptyBody string
     Deploy branchNames ->
       let
         body = Http.multipartBody $ List.map (uncurry Http.stringPart) branchNames
       in
-        put ("/api/instance/" ++ instanceId) body string
+        put ("/api/instances/" ++ instanceId ++ "/deploy") body string
     Terminate ->
-      delete ("/api/instance/" ++ instanceId) string
+      delete ("/api/instances/" ++ instanceId) string
 
 view : String -> Model -> Html Msg
 view instanceId model =

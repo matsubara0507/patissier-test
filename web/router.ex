@@ -27,11 +27,11 @@ defmodule PastryChefTest.Router do
 
     get "/branches", BranchesController, :branches
 
-    get "/instance/:id", InstanceController, :show
-    post "/instance", InstanceController, :create
-    put "/instance/:id", InstanceController, :deploy
-    put "/instance/:id/rename/:name", InstanceController, :rename
-    delete "/instance/:id", InstanceController, :delete
-    get "/instances", InstanceController, :instances
+    get "/instances", InstancesController, :instances
+    get "/instances/:id", InstancesController, :instance
+    post "/instances", InstancesController, :create
+    put "/instances/:id/deploy", InstancesController, :deploy
+    put "/instances/:id/rename/:name", InstancesController, :rename
+    delete "/instances/:id", InstancesController, :delete
   end
 end
