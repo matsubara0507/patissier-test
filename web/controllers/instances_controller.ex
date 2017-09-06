@@ -75,10 +75,11 @@ defmodule PastryChefTest.InstancesController do
     branch1 = params["html-dump1"]
     branch2 = params["html-dump2"]
     result = OK.with do
+      dir = "/home/ec2-user/"
+      response <- EC2.deploy_ec2_instance(id, env[:key_path], "echo '#{branch1} and #{branch2}' > #{dir}/index.html")
       tags = [{:html_dump1, branch1}, {:html_dump2, branch2}]
       _ <- EC2.update_ec2_instance_tags(id, tags)
-      dir = "/home/ec2-user/"
-      EC2.deploy_ec2_instance(id, env[:key_path], "echo '#{branch1} and #{branch2}' > #{dir}/index.html")
+      OK.success response
     end
     case result do
       {:ok, term} ->
@@ -90,6 +91,8 @@ defmodule PastryChefTest.InstancesController do
 
   def change_state(conn, %{"id" => id, "state" => state}) do
     result = case state do
+      "start" -> EC2.start_ec2_instance(id)
+      "stop" -> EC2.stop_ec2_instance(id)
       "terminate" -> EC2.terminate_ec2_instance(id)
       "" -> {:error, "undefined state"}
     end

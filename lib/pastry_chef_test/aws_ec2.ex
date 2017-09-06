@@ -47,6 +47,16 @@ defmodule PastryChefTest.EC2 do
     end
   end
 
+  def start_ec2_instance(instance_id) do
+    ExAws.EC2.start_instances([instance_id])
+    |> ExAws.request
+  end
+
+  def stop_ec2_instance(instance_id) do
+    ExAws.EC2.stop_instances([instance_id])
+    |> ExAws.request
+  end
+
   def terminate_ec2_instance(instance_id) do
     ExAws.EC2.terminate_instances([instance_id])
     |> ExAws.request

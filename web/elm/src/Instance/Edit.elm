@@ -30,13 +30,15 @@ type alias Model =
 type ButtonAction
   = Rename String
   | Deploy (List (RepoName, String))
+  | Start
+  | Stop
   | Terminate
 
 type Msg
   = Name String
   | BranchSelector RepoName BS.Msg
   | Push String ButtonAction
-  | FetchResult (Result Http.Error String)
+  | FetchResult String (Result Http.Error String)
   | FetchInstance (Result Http.Error Instance)
 
 init : Instance -> (Model, Cmd Msg)
@@ -73,7 +75,8 @@ fetchInstance instanceId =
     Http.send FetchInstance request
 
 fetchResult : String -> ButtonAction -> Cmd Msg
-fetchResult instanceId = Http.send FetchResult . toRequest instanceId
+fetchResult instanceId =
+  Http.send (FetchResult instanceId) . toRequest instanceId
 
 toRequest : String -> ButtonAction -> Http.Request String
 toRequest instanceId action =
@@ -85,6 +88,10 @@ toRequest instanceId action =
         body = Http.multipartBody $ List.map (uncurry Http.stringPart) branchNames
       in
         put ("/api/instances/" ++ instanceId ++ "/deploy") body string
+    Start ->
+      put ("/api/instances/" ++ instanceId ++ "/state/start") Http.emptyBody string
+    Stop ->
+      put ("/api/instances/" ++ instanceId ++ "/state/stop") Http.emptyBody string
     Terminate ->
       put ("/api/instances/" ++ instanceId ++ "/state/terminate") Http.emptyBody string
 
@@ -155,11 +162,12 @@ viewDeployButton : String -> Model -> Html Msg
 viewDeployButton instanceId model =
   let
     repoToTuple repo = (repo.name, repo.branchModel.selectBranchName)
-    flag = List.foldl (&&) True . (::) (model.name /= "")
-         $ List.map (\repo -> repo.branchModel.selectBranchName /= "") model.repositories
+    flag1 = List.foldl (&&) True . (::) (model.name /= "")
+          $ List.map (\repo -> repo.branchModel.selectBranchName /= "") model.repositories
+    flag2 = model.state == "running"
     msg = Push instanceId . Deploy $ List.map repoToTuple model.repositories
   in
-    div [] [ viewButton "Deploy instance" "btn-primary mt-2" flag msg model ]
+    div [] [ viewButton "Deploy instance" "btn-primary mt-2" (flag1 && flag2) msg model ]
 
 viewControlState : String -> Model -> Html Msg
 viewControlState instanceId model =
@@ -167,15 +175,46 @@ viewControlState instanceId model =
      [ dt [] [ label [] [ text "Control Instance State" ]
              , viewState model.state
              ]
-     , dt [] [ ul [] [ viewTerminate instanceId model ] ]
+     , dt [] [ ul [ class "border one-half" ]
+                  [ viewStart instanceId model
+                  , viewStop instanceId model
+                  , viewTerminate instanceId model
+                  ]
+             ]
      ]
+
+viewStart : String -> Model -> Html Msg
+viewStart instanceId model =
+  let
+    flag = model.state == "stopped"
+  in
+    li [ class "Box-row" ]
+       [ viewButton "Start"
+            "boxed-action" flag (Push instanceId Start) model
+       , strong [] [ text "Start Instance" ]
+       ]
+
+viewStop : String -> Model -> Html Msg
+viewStop instanceId model =
+  let
+    flag = model.state == "running"
+  in
+    li [ class "Box-row" ]
+       [ viewButton "Stop"
+            "boxed-action" flag (Push instanceId Stop) model
+       , strong [] [ text "Stop Instance" ]
+       ]
 
 viewTerminate : String -> Model -> Html Msg
 viewTerminate instanceId model =
-  li [ class "Box-row one-half" ]
-     [ viewButton "Terminate" "btn-danger boxed-action" True (Push instanceId Terminate) model
-     , strong [] [ text "Terminate Instance" ]
-     ]
+  let
+    flag = model.state /= "terminated"
+  in
+    li [ class "Box-row" ]
+       [ viewButton "Terminate"
+            "btn-danger boxed-action" flag (Push instanceId Terminate) model
+       , strong [] [ text "Terminate Instance" ]
+       ]
 
 viewResult : Model -> List (Html Msg)
 viewResult model =
@@ -221,9 +260,9 @@ update msg model =
     FetchInstance (Ok instance) -> (updateInstance instance model, Cmd.none)
     FetchInstance (Err error) ->
       ({ model | instance = Failure "Something went wrong..." }, Cmd.none)
-    FetchResult (Ok response) ->
-      ({ model | requesting = False, result = Success response }, Cmd.none)
-    FetchResult (Err error) ->
+    FetchResult instanceId (Ok response) ->
+      ({ model | requesting = False, result = Success response }, fetchInstance instanceId)
+    FetchResult _ (Err error) ->
       ({ model | requesting = False, result = Failure "Something went wrong..." }, Cmd.none)
 
 updateRepo : RepoName -> BS.Model -> Model -> Model
