@@ -39,17 +39,6 @@ type Msg
   | FetchResult (Result Http.Error String)
   | FetchInstance (Result Http.Error Instance)
 
--- type Msg
---   = Name String
---   | Rename String String
---   | Terminate String
---   | BranchSelector RepoName BS.Msg
---   | FetchInstance (Result Http.Error Instance)
---   | FetchRename (Result Http.Error String)
---   | FetchTerminate (Result Http.Error String)
---   | FetchResultDeployEnv (Result Http.Error String)
---   | RequestToDeployEnv String (List (RepoName, String))
-
 init : Instance -> (Model, Cmd Msg)
 init = flip initModel model . .id
 
@@ -220,8 +209,6 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     Name name -> ({ model | name = name }, Cmd.none)
-    -- Rename instanceId name -> ({ model | requesting = True }, fetchRename instanceId name)
-    -- Terminate instanceId -> (model, fetchTerminate instanceId)
     BranchSelector repoName branchMsg ->
       case List.find (\repo -> repo.name == repoName) model.repositories of
         Just repo ->
@@ -238,8 +225,6 @@ update msg model =
       ({ model | requesting = False, result = Success response }, Cmd.none)
     FetchResult (Err error) ->
       ({ model | requesting = False, result = Failure "Something went wrong..." }, Cmd.none)
-    -- RequestToDeployEnv instanceId branches ->
-    --   ({ model | requesting = True }, fetchResult instanceId branches)
 
 updateRepo : RepoName -> BS.Model -> Model -> Model
 updateRepo repoName branchModel model =
