@@ -79,7 +79,7 @@ handleRoute route m =
         $ New.initModel model.newInstance
       EditR instanceId ->
         (\m -> { model | editInstance = m }) *** Cmd.map EditInstance
-        $ Edit.initModel instanceId model.editInstance        
+        $ Edit.initModel instanceId model.editInstance
       _ -> (model, Cmd.none)
 
 subscriptions : Model -> Sub msg
@@ -88,13 +88,16 @@ subscriptions model = Sub.none
 
 view : Model -> Html Msg
 view model =
-  div [] [ viewHeader,
-    case model.sitemap of
-      HomeR -> Html.map GetInstances $ Instances.view model.instances
-      NewR -> Html.map NewInstance $ New.view model.newInstance
-      EditR instanceId ->
-        Html.map EditInstance $ Edit.view instanceId model.editInstance
-      NotFoundR -> notFound
+  div []
+    [ viewHeader
+    , case model.sitemap of
+        HomeR ->
+          Html.map GetInstances $ Instances.view model.instances
+        NewR ->
+          Html.map NewInstance $ New.view model.newInstance
+        EditR instanceId ->
+          Html.map EditInstance $ Edit.view instanceId model.editInstance
+        NotFoundR -> notFound
   ]
 
 viewHeader : Html Msg
