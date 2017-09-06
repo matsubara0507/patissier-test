@@ -73,6 +73,15 @@ defmodule PastryChefTest.InstanceController do
     end
   end
 
+  def delete(conn, %{"id" => id}) do
+    case EC2.terminate_ec2_instance(id) do
+      {:ok, _term} ->
+        render conn, message: "success!"
+      {:error, term} ->
+        render conn, message: "error: #{inspect(term)}"
+    end
+  end
+
   def instances(conn, _param) do
     result = OK.with do
       response <- EC2.fetch_ec2_instances_info()

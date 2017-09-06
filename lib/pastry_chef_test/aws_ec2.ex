@@ -42,9 +42,14 @@ defmodule PastryChefTest.EC2 do
       IO.inspect public_ip_address
       conn <- connect_ssh_repeat(public_ip_address, key_path)
       IO.inspect "ssh success!"
-      SSHEx.cmd! conn, cmd 
+      SSHEx.cmd! conn, cmd
       OK.success "run: ssh -i #{key_path}/id_rsa ec2-user@#{public_ip_address}"
     end
+  end
+
+  def terminate_ec2_instance(instance_id) do
+    ExAws.EC2.terminate_instances([instance_id])
+    |> ExAws.request
   end
 
   def parse_instance_id(response) do

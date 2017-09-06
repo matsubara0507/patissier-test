@@ -31,5 +31,17 @@ put url body decoder =
     , withCredentials = False
     }
 
+delete : String -> Decoder a -> Request a
+delete url decoder =
+  Http.request
+    { method = "DELETE"
+    , headers = []
+    , url = url
+    , body = emptyBody
+    , expect = Http.expectJson decoder
+    , timeout = Nothing
+    , withCredentials = False
+    }
+
 undefined : () -> a
 undefined _ = crash "Undefined!"

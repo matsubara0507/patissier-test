@@ -12,4 +12,6 @@ defmodule PastryChefTest.InstanceView do
 
   def render("instances.json", %{instances: instances}), do: instances
   def render("instances.json", %{message: message}), do: message
+
+  def render("delete.json", %{message: message}), do: message
 end

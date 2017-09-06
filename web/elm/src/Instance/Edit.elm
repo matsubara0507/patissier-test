@@ -3,7 +3,7 @@ module Instance.Edit exposing (..)
 import BranchSelector as BS
 import Instance exposing (..)
 import Types.RemoteData exposing (RemoteData(..))
-import Utils exposing (warningMessage, put)
+import Utils exposing (warningMessage, put, delete)
 
 import Html exposing (..)
 import Html.Attributes exposing ( class, defaultValue, list, maxlength
@@ -29,9 +29,11 @@ type alias Model =
 type Msg
   = Name String
   | Rename String String
+  | Terminate String
   | BranchSelector RepoName BS.Msg
   | FetchInstance (Result Http.Error Instance)
   | FetchRename (Result Http.Error String)
+  | FetchTerminate (Result Http.Error String)
   | FetchResultDeployEnv (Result Http.Error String)
   | RequestToDeployEnv String (List (RepoName, String))
 
@@ -86,6 +88,14 @@ fetchRename instanceId instanceName =
   in
     Http.send FetchRename request
 
+fetchTerminate : String -> Cmd Msg
+fetchTerminate instanceId =
+  let
+    apiUrl = "/api/instance/" ++ instanceId
+    request = delete apiUrl string
+  in
+    Http.send FetchTerminate request
+
 view : String -> Model -> Html Msg
 view instanceId model =
   div [ class "container mt-4" ]
@@ -97,6 +107,8 @@ view instanceId model =
       , viewRename instanceId model
       , hr [] []
       , viewRedeploy instanceId model
+      , hr [] []
+      , viewControlState instanceId model
       , div [ id "result" ] (viewResult model)
       ]
 
@@ -158,6 +170,22 @@ viewDeployButton instanceId model =
                [ text "Deploy instance" ]
       ]
 
+viewControlState : String -> Model -> Html Msg
+viewControlState instanceId model =
+  dl [ class "form-group" ]
+     [ dt [] [ label [] [ text "Control Instance State" ] ]
+     , dt [] [ ul [] [ viewTerminate instanceId model ] ]
+     ]
+
+viewTerminate : String -> Model -> Html Msg
+viewTerminate instanceId model =
+  li [ class "Box-row one-half" ]
+     [ button [ class "btn btn-danger boxed-action"
+              , onClick $ Terminate instanceId ]
+              [ text "Terminate" ]
+     , strong [] [ text "Terminate Instance" ]
+     ]
+
 viewResult : Model -> List (Html Msg)
 viewResult model =
   case model.result of
@@ -175,6 +203,7 @@ update msg model =
   case msg of
     Name name -> ({ model | requesting = True, name = name }, Cmd.none)
     Rename instanceId name -> (model, fetchRename instanceId name)
+    Terminate instanceId -> (model, fetchTerminate instanceId)
     BranchSelector repoName branchMsg ->
       case List.find (\repo -> repo.name == repoName) model.repositories of
         Just repo ->
@@ -188,6 +217,10 @@ update msg model =
     FetchRename (Ok response) ->
       ({ model | requesting = False, result = Success response }, Cmd.none)
     FetchRename (Err error) ->
+      ({ model | requesting = False, result = Failure "Something went wrong..." }, Cmd.none)
+    FetchTerminate (Ok response) ->
+      ({ model | requesting = False, result = Success response }, Cmd.none)
+    FetchTerminate (Err error) ->
       ({ model | requesting = False, result = Failure "Something went wrong..." }, Cmd.none)
     FetchResultDeployEnv (Ok response) ->
       ({ model | requesting = False, result = Success response }, Cmd.none)
