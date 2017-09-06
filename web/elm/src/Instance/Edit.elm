@@ -7,7 +7,7 @@ import Utils exposing (warningMessage, put, delete)
 
 import Html exposing (..)
 import Html.Attributes exposing ( class, defaultValue, list, maxlength
-                                , id, value, size, type_)
+                                , id, value, size, style, type_)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as JD exposing (string)
@@ -21,6 +21,7 @@ type alias RepoModel = { name : RepoName, branchModel : BS.Model }
 type alias Model =
   { instance : RemoteData String Instance
   , name : String
+  , state : String
   , repositories : List RepoModel
   , requesting : Bool
   , result : RemoteData String String
@@ -44,6 +45,7 @@ model : Model
 model =
   { instance = NotRequested
   , name = ""
+  , state = ""
   , repositories =
       [ { name = "html-dump1", branchModel = BS.model }
       , { name = "html-dump2", branchModel = BS.model }
@@ -173,7 +175,9 @@ viewDeployButton instanceId model =
 viewControlState : String -> Model -> Html Msg
 viewControlState instanceId model =
   dl [ class "form-group" ]
-     [ dt [] [ label [] [ text "Control Instance State" ] ]
+     [ dt [] [ label [] [ text "Control Instance State" ]
+             , viewState model.state
+             ]
      , dt [] [ ul [] [ viewTerminate instanceId model ] ]
      ]
 
@@ -197,6 +201,22 @@ viewResult model =
       [ warningMessage "" error (text "") ]
     Success page ->
       [ div [ class "flash mt-3" ] [ text page ] ]
+
+viewState : String -> Html msg
+viewState state =
+  let
+    viewState_ st txt =
+      span [ class "state mx-3", style [("backgroundColor", stateColor st)] ]
+           [ text txt ]
+  in
+    case state of
+      "running" -> viewState_ state "Running"
+      "pending" -> viewState_ state "Pending"
+      "shutting-down" -> viewState_ state "Shutting-down"
+      "terminated" -> viewState_ state "Terminated"
+      "stopping" -> viewState_ state "Stopping"
+      "stopped" -> viewState_ state "Stopped"
+      _ -> span [] []
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -243,6 +263,7 @@ updateInstance instance model =
   { model
   | instance = Success instance
   , name = getInstanceName instance
+  , state = instance.state
   , repositories = List.map (updateSelectBranch instance) model.repositories
   }
 

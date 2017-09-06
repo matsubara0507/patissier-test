@@ -29,7 +29,7 @@ instanceDecoder = succeed Instance
                |: (field "tags" (JD.list tagDecoder))
 
 instancesDecoder : JD.Decoder Instances
-instancesDecoder = JD.list instanceDecoder 
+instancesDecoder = JD.list instanceDecoder
 
 tagDecoder : JD.Decoder Tag
 tagDecoder = succeed Tag
@@ -39,12 +39,12 @@ tagDecoder = succeed Tag
 stateColor : String -> String
 stateColor instanceState =
   case instanceState of
-    "pending" -> "yellow"
-    "running" -> "lawngreen"
-    "shutting-down" -> "yellow"
-    "terminated" -> "red"
-    "stopping" -> "yellow"
-    "stopped" -> "red"
+    "pending" -> "gold"
+    "running" -> "limegreen"
+    "shutting-down" -> "gold"
+    "terminated" -> "crimson"
+    "stopping" -> "gold"
+    "stopped" -> "crimson"
     _ -> "transparent"
 
 getInstanceName : Instance -> String
