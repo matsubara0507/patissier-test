@@ -33,7 +33,7 @@ defmodule PastryChefTest.InstancesController do
         render conn, message: "error: #{inspect(term)}"
     end
   end
-  
+
   def create(conn, params) do
     env = Application.get_env(:pastry_chef_test, PastryChefTest.InstanceController)
     branch1 = params["html-dump1"]
@@ -88,8 +88,12 @@ defmodule PastryChefTest.InstancesController do
     end
   end
 
-  def delete(conn, %{"id" => id}) do
-    case EC2.terminate_ec2_instance(id) do
+  def change_state(conn, %{"id" => id, "state" => state}) do
+    result = case state do
+      "terminate" -> EC2.terminate_ec2_instance(id)
+      "" -> {:error, "undefined state"}
+    end
+    case result do
       {:ok, _term} ->
         render conn, message: "success!"
       {:error, term} ->

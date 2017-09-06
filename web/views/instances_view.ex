@@ -11,6 +11,5 @@ defmodule PastryChefTest.InstancesView do
 
   def render("rename.json", %{message: message}), do: message
   def render("deploy.json", %{message: message}), do: message
-  
-  def render("delete.json", %{message: message}), do: message
+  def render("change_state.json", %{message: message}), do: message
 end

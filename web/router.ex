@@ -32,6 +32,6 @@ defmodule PastryChefTest.Router do
     post "/instances", InstancesController, :create
     put "/instances/:id/deploy", InstancesController, :deploy
     put "/instances/:id/rename/:name", InstancesController, :rename
-    delete "/instances/:id", InstancesController, :delete
+    put "/instances/:id/state/:state", InstancesController, :change_state
   end
 end

@@ -86,7 +86,7 @@ toRequest instanceId action =
       in
         put ("/api/instances/" ++ instanceId ++ "/deploy") body string
     Terminate ->
-      delete ("/api/instances/" ++ instanceId) string
+      put ("/api/instances/" ++ instanceId ++ "/state/terminate") Http.emptyBody string
 
 view : String -> Model -> Html Msg
 view instanceId model =
