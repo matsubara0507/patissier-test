@@ -1,4 +1,4 @@
-# PastryChefTest
+# Patissier Test
 
 To start your Phoenix app:
 
